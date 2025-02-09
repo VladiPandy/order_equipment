@@ -1,0 +1,22 @@
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+redis==4.4.2
+pydantic==2.5.2
+pydantic-settings==2.1.0
+uvicorn==0.25.0
+uvloop==0.17.0 ; sys_platform != "win32" and implementation_name == "cpython"
+orjson==3.9.10
+fastapi==0.109.0
+typer==0.9.0
+werkzeug==3.0.1
+aiohttp==3.8.6
+python-jose[cryptography]==3.3.0
+django==4.2.5
+flake8==6.1.0
+python-dotenv==1.0.0
+psycopg2==2.9.9
+split-settings==1.0.0
+requests==2.31.0
+gunicorn==20.1.0
+django-modeladmin-reorder==0.3.1

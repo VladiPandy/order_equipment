@@ -1,0 +1,57 @@
+
+services:
+  db:
+    build:
+      ./db
+    command: ["postgres", "-p", "5442"]
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 'DB_PASSWORD'
+      POSTGRES_USER: 'DB_USER'
+      POSTGRES_DB: 'DB_NAME'
+    ports:
+      - "5442:5442"
+    volumes:
+      - ./db/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+
+  admin_app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile_2
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    volumes:
+      - web-static:/app/staticfiles
+    depends_on:
+      - db
+
+  api_app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile_1
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    volumes:
+      - web-static:/app/staticfiles
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - web-static:/app/staticfiles
+    depends_on:
+      - api_app
+      - admin_app
+
+volumes:
+  web-static:
