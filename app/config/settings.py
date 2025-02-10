@@ -13,7 +13,7 @@ include(
     'components/database.py',
 )
 
-SECRET_KEY = ''
+SECRET_KEY = 'b5+*rf30rkv906o57yv7l1a74qx$@-^4a1&e+ndax7n#&f^a!j'
 
 DEBUG = os.environ.get('DEBUG', False) == 'True'
 

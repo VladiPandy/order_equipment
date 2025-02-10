@@ -26,6 +26,7 @@ router = APIRouter()
 )
 @admin_or_current_user_only
 async def possible_create_booking(
+        request: Request,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):

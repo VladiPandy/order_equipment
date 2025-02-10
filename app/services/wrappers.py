@@ -76,7 +76,7 @@ def admin_only(func):
         if not user:
             print('here ')
             login_url = getattr(settings, 'LOGIN_URL', '/login/')
-            return RedirectResponse(url=f"http://127.0.0.1:8000/{login_url}?next=http://127.0.0.1:8001/{request.url.path}", status_code=303)
+            return RedirectResponse(url=f"http://127.0.0.1/{login_url}?next=http://127.0.0.1/{request.url.path}", status_code=303)
             # raise HTTPException(
             #     status_code=status.HTTP_401_UNAUTHORIZED,
             #     detail="Пользователь не аутентифицирован"
@@ -128,7 +128,7 @@ def admin_or_current_user_only(func):
             print('here ')
             login_url = getattr(settings, 'LOGIN_URL', '/login/')
             return RedirectResponse(
-                url=f"http://127.0.0.1:8000{login_url}?next=http://127.0.0.1:8001{request.url.path}",
+                url=f"http://127.0.0.1{login_url}?next=http://127.0.0.1:{request.url.path}",
                 status_code=303)
             # raise HTTPException(
             #     status_code=status.HTTP_401_UNAUTHORIZED,

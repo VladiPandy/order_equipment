@@ -8,8 +8,7 @@ import django
 
 
 from api.v1 import info, booking
-#from core.config import elastic_settings, redis_settings
-from db import elastic, redis, postgres
+from db import postgres
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
