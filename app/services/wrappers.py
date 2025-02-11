@@ -1,10 +1,10 @@
 from functools import wraps
-
+from base64 import b64decode
 from fastapi import HTTPException, Request
 from db.postgres import get_db
 from starlette import status
 from asgiref.sync import sync_to_async
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.sessions.backends.db import SessionStore
 from starlette.responses import RedirectResponse
 from django.conf import settings
@@ -20,31 +20,45 @@ def get_django_user_from_request(request: Request, db_async_session):
     Выходные данные:
     - Объект пользователя (User) или None, если пользователь не авторизован.
     """
-    # Предполагается, что куки сессии Django называется 'sessionid'
 
     session_id = request.cookies.get('sessionid')
-    if not session_id:
-        return None
 
-    # Инициализируем Django SessionStore по session_key
-    s = SessionStore(session_key=session_id)
-    try:
-        # Попытка загрузить сессию из БД
-        s.load()
-    except Exception:
-        # Если сессия невалидна или отсутствует
-        return None
-    user_id = s.get('_auth_user_id')
-    if not user_id:
-        return None
+    if session_id:
+        # Инициализируем Django SessionStore по session_key
+        s = SessionStore(session_key=session_id)
+        try:
+            # Попытка загрузить сессию из БД
+            s.load()
+        except Exception:
+            # Если сессия невалидна или отсутствует
+            return None
+        user_id = s.get('_auth_user_id')
+        if not user_id:
+            return None
 
-    User = get_user_model()
-    try:
-        user = User.objects.get(pk=user_id)
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=user_id)
+            return user
+        except User.DoesNotExist:
+            return None
+
+    auth_header = request.headers.get("Authorization")
+    print(auth_header)
+    if auth_header and auth_header.startswith("Basic "):
+        print(auth_header.split(" ")[1])
+        try:
+            # Извлекаем и декодируем учетные данные
+            encoded_credentials = auth_header.split(" ")[1]
+            decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
+            username, password = decoded_credentials.split(":", 1)
+        except Exception:
+            return None
+        user = authenticate(username=username, password=password)
+        print(user)
         return user
-    except User.DoesNotExist:
-        return None
-#
+
+
 
 def admin_only(func):
     """
