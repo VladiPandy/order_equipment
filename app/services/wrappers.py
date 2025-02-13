@@ -51,6 +51,7 @@ def get_django_user_from_request(request: Request, db_async_session):
             # Извлекаем и декодируем учетные данные
             encoded_credentials = auth_header.split(" ")[1]
             decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
+            print(decoded_credentials)
             username, password = decoded_credentials.split(":", 1)
         except Exception:
             return None

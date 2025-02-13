@@ -4,7 +4,7 @@ from db.postgres import get_db
 from sqlalchemy import text
 from typing import List
 
-from fastapi import HTTPException, Request, Response, status
+from fastapi import  APIRouter, Body, HTTPException, Request, Response, status
 from services.wrappers import admin_only, admin_or_current_user_only
 from services.info import UserInfoService
 from fastapi import HTTPException, Request
@@ -59,9 +59,12 @@ async def possible_create_booking(
 @admin_or_current_user_only
 async def get_project_bookings(
         request: Request,
+        req_modelx: InfoListsRequest = Body(
+            ..., example={
+            "date_period": "19.01.2024-27.10.2024"}),
         db: AsyncSession = Depends(get_db),
         user: object = None
-):
+) -> InfoListsRequest:
     try:
         data = await request.json()
         req_model = InfoListsRequest(**data)
@@ -69,8 +72,6 @@ async def get_project_bookings(
         raise HTTPException(status_code=400,
                             detail=f"Неверные входные данные: {e}")
 
-    print('req_model')
-    print(req_model)
     return await UserInfoService.info_bookings(req_model, user, db)
 
 
@@ -85,6 +86,9 @@ async def get_project_bookings(
 @admin_or_current_user_only
 async def get_project_bookings(
         request: Request,
+        req_modelx: InfoListsRequest = Body(
+            ..., example={
+            "date_period": "19.01.2024-27.10.2024"}),
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):

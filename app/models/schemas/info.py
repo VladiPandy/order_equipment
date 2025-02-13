@@ -10,20 +10,20 @@ class InfoListsRequest(BaseModel):
     date_period: str  # Обязательно, формат "dd.mm.yyyy-dd.mm.yyyy"
 
 class InfoListsResponse(BaseModel):
-    projects: List[str]
-    date_bookings: List[str]
-    analyzes: List[str]
-    equipments: List[str]
-    executors: List[str]
-    statuses: List[str]
+    project: List[str]
+    date: List[str]
+    analyse: List[str]
+    equipment: List[str]
+    executor: List[str]
+    status: List[str]
 
 class InfoBookingItem(BaseModel):
     id: int
     project: str
-    date_booking: str  # Формат: "dd.mm.yyyy"
-    analyze: str
+    date: str  # Формат: "dd.mm.yyyy"
+    analyse: str
     equipment: str
     executor: str
-    count_samples: int
+    samples: int
     status: str
     comment: Optional[str] = ""

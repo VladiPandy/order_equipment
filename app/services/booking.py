@@ -40,9 +40,9 @@ class UserBookingService:
     async def get_uuids(db: AsyncSession,username, data) -> None:
         print(data)
         try:
-            if 'date_booking' in data:
+            if 'date' in data:
 
-                date_val = datetime.datetime.strptime(data['date_booking'],
+                date_val = datetime.datetime.strptime(data['date'],
                                                       '%d.%m.%Y').date()
                 date_text = f"""date = '{date_val}'"""
 
@@ -55,10 +55,10 @@ class UserBookingService:
                                 detail=f"Неверный формат даты: {e}")
 
         try:
-            if 'analyze' in data:
-                analyze_val = f"a.analyze_name = '{data['analyze']}'"
+            if 'analyse' in data:
+                analyze_val = f"a.analyze_name = '{data['analyse']}'"
                 analyze_info = await db.execute(text(
-                    f"SELECT id FROM \"analyze\" WHERE analyze_name = '{data['analyze']}' ;"))
+                    f"SELECT id FROM \"analyze\" WHERE analyze_name = '{data['analyse']}' ;"))
                 analyze_id = "'" + str(analyze_info.scalars().all()[0]) + "'"
             elif 'analyze_id' in data:
                 analyze_id = "'" + str(data['analyze_id']) + "'"
@@ -97,7 +97,7 @@ class UserBookingService:
             raise HTTPException(status_code=400,
                             detail=f"Неверный формат исполнителя: {e}")
 
-        print('date_booking' in data)
+        print('date' in data)
         responsible_person = await db.execute(text(
             f"SELECT id FROM \"project\" WHERE project_name = '{username}' ;"))
         items = responsible_person.scalars().all()
@@ -221,7 +221,7 @@ class UserBookingService:
                             (
                                 select *
                                 from block_booking
-                                where write_timestamp+'1 minutes'::interval > now()  
+                                where write_timestamp+'10 minutes'::interval > now()  
                                         and project_id != '{uuids_json['user_id']}'
                                         and id_delete = False
                             )
@@ -281,7 +281,10 @@ class UserBookingService:
             cookie_createkey: Optional[str] = None
     ) -> PossibleCreateBookingResponse:
 
+        if user.is_staff:
+            raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
         request_dict = request_data.dict(exclude_unset=True)
+
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
 
@@ -322,20 +325,20 @@ class UserBookingService:
         analyze_list = []
         equipment_list = []
         executor_list = []
-        sample_list = []
+        samples_list = []
         for val in list_availible_values:
             date_list.append(str(val[0].strftime('%d.%m.%Y')))
             analyze_list.append(val[3])
             equipment_list.append(val[4])
             executor_list.append(val[6])
-            sample_list.append(val[7])
+            samples_list.append(val[7])
 
         return PossibleCreateBookingResponse(
-            dates=list(set(date_list)),
-            analyzes=list(set(analyze_list)),
-            equipments=list(set(equipment_list)),
-            executors=list(set(executor_list)),
-            sample_limits=int(list(set(sample_list))[0])
+            date=list(set(date_list)),
+            analyse=list(set(analyze_list)),
+            equipment=list(set(equipment_list)),
+            executor=list(set(executor_list)),
+            samples_limit=int(list(set(samples_list))[0])
         )
 
     @staticmethod
@@ -384,11 +387,12 @@ class UserBookingService:
                                            cookie_createkey)
 
         print(request_dict)
+        print(uuids_json)
         insert_query = text(f"""
                 INSERT INTO public.projects_booking
-                (project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status)
+                (project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status,is_delete,comment)
                 VALUES ('{uuids_json['user_id']}', '{uuids_json['date_val']}',{uuids_json['analyze_id']}, {uuids_json['equipment_id']}
-                , {uuids_json['operator_id']}, '{request_dict['count_samples']}', '{'На рассмотрении'}')
+                , {uuids_json['operator_id']}, '{request_dict['samples']}', '{'На рассмотрении'}',False,'')
                 RETURNING id
             """)
 
@@ -536,7 +540,7 @@ class UserBookingService:
                 chose=ChoseData(
                     project=booking_info['project_name'],
                     date=booking_info['date_info'],
-                    analyze=booking_info['analyze_name'],
+                    analyse=booking_info['analyze_name'],
                     equipment=booking_info['equipment_name'],
                     executor=booking_info['executor_fio'],
                     samples=booking_info['count_analyses'],
@@ -544,11 +548,11 @@ class UserBookingService:
                     comment=booking_info['comment'] or ''
                 ),
                 change=ChangeData(
-                    dates=list(set(date_list)),
-                    analyzes=list(set(analyze_list)),
-                    equipments=list(set(equipment_list)),
-                    executors=list(set(executor_list)),
-                    sample_limits=int(list(set(sample_list))[0]),
+                    date=list(set(date_list)),
+                    analyse=list(set(analyze_list)),
+                    equipment=list(set(equipment_list)),
+                    executor=list(set(executor_list)),
+                    samples_limit=int(list(set(sample_list))[0]),
                     status=['на рассмотрении, Исполнено']
                 )
             )
@@ -610,9 +614,9 @@ class UserBookingService:
             changes["date_booking"] = {
                 "old": booking_info.get("date_info"),
                 "new": request_dict['date']}
-        if str(booking_info.get("analyze_name")) != request_dict["analyze"]:
+        if str(booking_info.get("analyze_name")) != request_dict["analyse"]:
             changes["analyze"] = {"old": str(booking_info.get("analyze_name")),
-                                     "new": request_dict["analyze"]}
+                                     "new": request_dict["analyse"]}
         if str(booking_info.get("equipment_name")) != request_dict["equipment"]:
             changes["equipment"] = {
                 "old": str(booking_info.get("equipment_name")),

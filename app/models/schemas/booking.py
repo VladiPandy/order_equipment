@@ -1,28 +1,47 @@
-from pydantic import BaseModel
-from typing import Dict, List, Any
+from pydantic import BaseModel, Field
+from typing import Dict, List, Any, Optional
 
 class PossibleCreateBookingRequest(BaseModel):
-    date_period: str  # Обязательно, формат "dd.mm.yyyy-dd.mm.yyyy"
-    # Если передаются другие поля, то это считается запрещённым заполнением.
-    date_booking: str = None
-    analyze: str = None
-    equipment: str = None
-    executor: str = None
+    date_period: str = Field(
+        ...,
+        description="Период в формате dd.mm.yyyy-dd.mm.yyyy",
+        example="19.01.2024-27.10.2024"
+    )
+    date: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="26.08.2024"
+    )
+    analyse: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Анализ 1"
+    )
+    equipment: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Прибор 1"
+    )
+    executor: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Иванов Иван Дмитриевич"
+    )
 
 class PossibleCreateBookingResponse(BaseModel):
-    dates: List[str]
-    analyzes: List[str]
-    equipments: List[str]
-    executors: List[str]
-    sample_limits: int
+    date: List[str]
+    analyse: List[str]
+    equipment: List[str]
+    executor: List[str]
+    samples_limit: int
 
 
 class CreateBookingRequest(BaseModel):
-    date_booking: str
-    analyze: str
+    date: str
+    analyse: str
     equipment: str
     executor: str
-    count_samples: int
+    samples: int
 
 class CreateBookingResponse(BaseModel):
     id: int
@@ -36,18 +55,18 @@ class PossibleChangesRequest(BaseModel):
 class ChoseData(BaseModel):
     project: str
     date: str
-    analyze: str
+    analyse: str
     equipment: str
     executor: str
     samples: int
     status: str
     comment: str
 class ChangeData(BaseModel):
-    dates: List[str]
-    analyzes: List[str]
-    equipments: List[str]
-    executors: List[str]
-    sample_limits: int
+    date: List[str]
+    analyse: List[str]
+    equipment: List[str]
+    executor: List[str]
+    samples_limit: int
     status: List[str]
 
 class PossibleChangesResponse(BaseModel):

@@ -67,12 +67,12 @@ class UserInfoService:
         # Если нет записей, возвращаем пустые списки
         if not rows:
             return InfoListsResponse(
-                projects=[],
-                date_bookings=[],
-                analyzes=[],
-                equipments=[],
-                executors=[],
-                statuses=[]
+                project=[],
+                date=[],
+                analyse=[],
+                equipment=[],
+                executor=[],
+                status=[]
             )
 
         # 3. Агрегируем данные в наборы (для уникальности)
@@ -98,12 +98,12 @@ class UserInfoService:
         projects = list(projects_set) # if user.is_staff else []
 
         return InfoListsResponse(
-            projects=projects,
-            date_bookings=list(date_bookings_set),
-            analyzes=list(analyzes_set),
-            equipments=list(equipments_set),
-            executors=list(executors_set),
-            statuses=list(statuses_set)
+            project=projects,
+            date=list(date_bookings_set),
+            analyse=list(analyzes_set),
+            equipment=list(equipments_set),
+            executor=list(executors_set),
+            status=list(statuses_set)
         )
 
     @staticmethod
@@ -118,7 +118,6 @@ class UserInfoService:
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
-        print(date_booking_dict)
 
         # Формируем запрос в зависимости от роли пользователя
 
@@ -176,11 +175,11 @@ class UserInfoService:
             booking_item = InfoBookingItem(
                 id=row[0],
                 project=row[1],
-                date_booking=date_booking_str,
-                analyze=row[3],
+                date=date_booking_str,
+                analyse=row[3],
                 equipment=row[4],
                 executor=row[5],
-                count_samples=row[6],
+                samples=row[6],
                 status=row[7],
                 comment=row[8] if row[8] is not None else ""
             )
