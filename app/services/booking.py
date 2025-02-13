@@ -111,7 +111,7 @@ class UserBookingService:
             'equipment_id': equipment_id,
             'operator_val': operator_val,
             'operator_id': operator_id,
-            'user_id': items[0]
+            'user_id': items[0] if items else ''
         }
 
         return uuids_json
@@ -217,12 +217,79 @@ class UserBookingService:
                                      blocking_element
                                 ) -> None:
         new_values_query = text(f"""
-                             with blocking_list as
+                             with  days_employes as (
+                                SELECT 1 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.monday = 'Работает' 
+                                union all 
+                                SELECT 2 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.tuesday = 'Работает' 
+                                union all 
+                                SELECT 3 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.wednesday = 'Работает' 
+                                union all 
+                                SELECT 4 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.thursday = 'Работает' 
+                                union all 
+                                SELECT 5 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.friday = 'Работает'
+                                union all 
+                                SELECT 6 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.saturday = 'Работает' 
+                                union all 
+                                SELECT 7 d, x.executor_id  FROM public.control_enter_workerweekstatus x
+                                where x.sunday = 'Работает' 
+                                )
+                                ,days_working as
+                                (
+                                SELECT 1 d FROM public.control_enter_workingdayofweek x
+                                where x.monday = true
+                                union all 
+                                SELECT 2 d FROM public.control_enter_workingdayofweek x
+                                where x.tuesday = true
+                                union all 
+                                SELECT 3 d FROM public.control_enter_workingdayofweek x
+                                where x.wednesday = true
+                                union all 
+                                SELECT 4 d FROM public.control_enter_workingdayofweek x
+                                where x.thursday = true
+                                union all 
+                                SELECT 5 d FROM public.control_enter_workingdayofweek x
+                                where x.friday = true
+                                union all 
+                                SELECT 6 d FROM public.control_enter_workingdayofweek x
+                                where x.saturday = true
+                                union all 
+                                SELECT 7 d FROM public.control_enter_workingdayofweek x
+                                where x.sunday = true
+                                )
+                                ,executor_limit as (
+                                    select executor_id  ,sum(count_analyses) used_limit, count(count_analyses) count_executor_per_day
+                                    from projects_booking
+                                    where date_booking between '{date_booking_dict['date_start']}'::date 
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                    group by date_booking, executor_id 
+                                )
+                                ,equipment_limit as (
+                                    select equipment_id   ,sum(count_analyses) used_limit, count(count_analyses) count_equipment_per_day
+                                    from projects_booking
+                                    where date_booking between '{date_booking_dict['date_start']}'::date 
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                    group by date_booking, equipment_id 
+                                )
+                                ,used_limits_analese_equipment as (
+                                    select analyse_id ,equipment_id ,sum(count_analyses) used_limit
+                                    from projects_booking
+                                    where {blocking_element} project_id = '{uuids_json['user_id']}' and
+                                         date_booking between '{date_booking_dict['date_start']}'::date 
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                    group by analyse_id ,equipment_id 
+                                )
+                                ,blocking_list as
                             (
                                 select *
                                 from block_booking
                                 where write_timestamp+'10 minutes'::interval > now()  
-                                        and project_id != '{uuids_json['user_id']}'
+                                       {blocking_element} and project_id != '{uuids_json['user_id']}'
                                         and id_delete = False
                             )
                             SELECT 
@@ -234,7 +301,11 @@ class UserBookingService:
                                 , eq."name" 
                                 , eq.status 
                                 , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) fio_x
-                                , x.limit_samples
+                                , x.limit_samples - ul.used_limit limit_samples
+                                , x.limit_samples limits_per_eq
+                                , ul.used_limit
+                                , eql.count_equipment_per_day
+                                , exl.count_executor_per_day
                             FROM generate_series(
                                 DATE '{date_booking_dict['date_start']}'::date, -- Начальная дата
                                 DATE '{date_booking_dict['date_end']}'::date, -- Конечная дата
@@ -258,6 +329,11 @@ class UserBookingService:
                                 when coalesce(bl.executor_id) is null  then  bl.date_booking = date::DATE and  bl.analyse_id = z.analazy_id and bl.equipment_id = v.equipment_id
                                 else bl.date_booking = date::DATE and  bl.analyse_id = z.analazy_id and bl.equipment_id = v.equipment_id and bl.executor_id = v.operator_id
                             end 
+                            left join used_limits_analese_equipment ul on ul.analyse_id = z.analazy_id and ul.equipment_id = v.equipment_id
+                            left join executor_limit exl on exl.executor_id = v.operator_id
+                            left join equipment_limit eql on eql.equipment_id = v.equipment_id
+                            right join days_working dw on dw.d = EXTRACT(DOW from date::DATE)
+                            right join days_employes de on de.d = EXTRACT(DOW from date::DATE) and de.executor_id = v.operator_id
                     where status = 'active' 
                         {blocking_element} and y.id = '{uuids_json['user_id']}'  
                         and bl.id is null
@@ -326,19 +402,22 @@ class UserBookingService:
         equipment_list = []
         executor_list = []
         samples_list = []
+        samples_used = []
         for val in list_availible_values:
             date_list.append(str(val[0].strftime('%d.%m.%Y')))
             analyze_list.append(val[3])
             equipment_list.append(val[4])
             executor_list.append(val[6])
             samples_list.append(val[7])
+            samples_used.append(val[9])
 
         return PossibleCreateBookingResponse(
             date=list(set(date_list)),
             analyse=list(set(analyze_list)),
             equipment=list(set(equipment_list)),
             executor=list(set(executor_list)),
-            samples_limit=int(list(set(samples_list))[0])
+            samples_limit=int(list(set(samples_list))[0]),
+            used=int(list(set(samples_used))[0])
         )
 
     @staticmethod
@@ -470,7 +549,8 @@ class UserBookingService:
     async def get_possible_changes(request_data,
                                    user,
                                    db: AsyncSession) -> PossibleChangesResponse:
-
+        if not user.is_staff:
+            raise HTTPException(status_code=403, detail="Изменение записи пользователем запрещено")
         request_dict = request_data.dict(exclude_unset=True)
 
         print(request_dict)
@@ -509,13 +589,13 @@ class UserBookingService:
 
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                         request_dict)
-
+        print('uuids_json')
         list_availible_values = await UserBookingService.availible_values(db,
                                                                           uuids_json,
                                                                           date_booking_dict,
                                                                           '-----'
                                                                           )
-
+        print(list_availible_values)
         if not list_availible_values:
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
@@ -574,7 +654,8 @@ class UserBookingService:
          5. Если изменений нет, возвращает ответ с пустым словарем changed_fields.
          6. Иначе, обновляет запись и возвращает id и словарь изменённых полей.
         """
-        # 1. Парсинг даты
+        if not user.is_staff:
+            raise HTTPException(status_code=403, detail="Изменение записи пользователем запрещено")
         request_dict = request_data.dict(exclude_unset=True)
 
         date_booking_dict = await UserBookingService.validate_date_booking(

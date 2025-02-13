@@ -34,6 +34,7 @@ class PossibleCreateBookingResponse(BaseModel):
     equipment: List[str]
     executor: List[str]
     samples_limit: int
+    used: int
 
 
 class CreateBookingRequest(BaseModel):

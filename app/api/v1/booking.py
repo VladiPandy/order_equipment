@@ -193,10 +193,11 @@ async def possible_create_booking(
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
-    try:
-        data = await request.json()
-        req_model = CancelRequest(**data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
-
-    return await UserBookingService.cancel_booking(req_model,user, db)
+    pass
+    # try:
+    #     data = await request.json()
+    #     req_model = CancelRequest(**data)
+    # except Exception as e:
+    #     raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
+    #
+    # return await UserBookingService.cancel_booking(req_model,user, db)
