@@ -20,8 +20,8 @@ AsyncSessionLocal = None
 async def lifespan(app: FastAPI):
     database_url = (
         f"postgresql+asyncpg://{'DB_USER'}:"
-        f"{'DB_PASSWORD'}@{'db'}:"
-        f"{'5442'}/{'DB_NAME'}"
+        f"{'DB_PASSWORD'}@{'localhost'}:"
+        f"{'5432'}/{'DB_NAME'}"
     )
 
     # Создаем асинхронный движок

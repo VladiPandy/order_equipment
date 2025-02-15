@@ -5,8 +5,8 @@ DATABASES = {
         'USER': 'DB_USER',
         'PASSWORD': 'DB_PASSWORD',
         #'HOST': 'host.docker.internal',
-        'HOST': 'db',
-        'PORT': 5442,
+        'HOST': 'localhost',
+        'PORT': 5432,
         'OPTIONS': {
            'options': '-c search_path=public,timesheets'
         }

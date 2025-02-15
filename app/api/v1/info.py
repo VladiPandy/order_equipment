@@ -16,7 +16,7 @@ from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
 
 router = APIRouter()
 
-@router.post("/project",
+@router.get("/project",
     response_model=InfoProjectResponse,
     tags=['Информация'],
     summary='Информация о пользователе',
@@ -40,6 +40,7 @@ async def possible_create_booking(
         responsible_person = await db.execute(text(
             f"SELECT responsible_person,project_name FROM \"project\" WHERE project_name = '{user.username}' LIMIT 1;"))
         items = responsible_person.fetchall()
+        print(items)
         calback = {
             "is_admin": 0,
             "project_name": items[0][1],
@@ -75,7 +76,7 @@ async def get_project_bookings(
     return await UserInfoService.info_bookings(req_model, user, db)
 
 
-@router.get("/booking_lists",
+@router.post("/booking_lists",
     response_model=InfoListsResponse,
     tags=['Информация'],
     summary='Списки для фильтрации',

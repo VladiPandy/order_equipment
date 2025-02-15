@@ -28,3 +28,18 @@ export type Filters = {
         ? I
         : DataType[K];
 };
+
+export interface BookingListsResponse {
+    project: string[];
+    date: string[];
+    analyse: string[];
+    equipment: string[];
+    executor: string[];
+    status: string[];
+}
+
+export interface HeaderInfo {
+    is_admin: number;
+    project_name: string;
+    responsible_fio: string;
+}

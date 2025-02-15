@@ -5,10 +5,11 @@ import FiltersLine from "./components/filtersLine/index";
 import MainPage from "./pages/main";
 import LoginPage from "./pages/login";
 import AdminPage from "./pages/admin";
-import { DataType, Filters, Keys } from "./types";
+import { DataType, Filters, Keys, HeaderInfo } from "./types";
 import { Statuses } from "./const";
 import { onLogIn, onlogOut } from "./actions/user";
-import { fetchBookingsData } from "./apis/apiService"; // Импорт функции из apiService.ts
+import { fetchBookingsData } from "./api/bookingService.ts";
+import { useHeaderInfo } from "./api/useHeaderInfo"; // импорт хука
 
 const initialFilters: Filters = {
   name: undefined,
@@ -27,7 +28,10 @@ function App() {
   const [currentPage, setCurrentPage] = useState<string>("main");
   const [user, setUser] = useState<string | null>(localStorage.getItem("user"));
 
-  // Загружаем данные из API
+
+  const [headerInfo, loadingHeader, headerError] = useHeaderInfo();
+
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -46,7 +50,8 @@ function App() {
       return Object.keys(filters).every((filter) => {
         const filterValue = filters[filter as Keys];
         const itemValue = item[filter as Keys];
-        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) return true;
+        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0))
+          return true;
         if (Array.isArray(filterValue)) {
           return filterValue.some((f) =>
               Array.isArray(itemValue) ? itemValue.includes(f) : false
@@ -96,7 +101,12 @@ function App() {
 
   return user ? (
       <>
-        <Header date={new Date().toLocaleDateString()} userInfo={user} onLogout={() => onlogOut(setUser)} />
+        <Header
+            date={new Date().toLocaleDateString()}
+            userInfo={user}
+            headerInfo={headerInfo || undefined}
+            onLogout={() => onlogOut(setUser)}
+        />
         <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
         <div className="App">
           <FiltersLine handleFilterChange={changeFilters} currentFilter={filters} resetFilters={resetFilters} />

@@ -8,28 +8,35 @@ import Logo from '../../assets/logo-2-en-finish.svg?react'
 import LogOut from '../../assets/logout.svg?react'
 
 import Button from '../../ui/Button'
-
+import { HeaderInfo } from "../../types";
 
 interface HeaderProps {
-    date: string
-    userInfo: string
-    onLogout: () => void
+    date: string;
+    userInfo?: string; // можно оставить, если нужно
+    headerInfo?: HeaderInfo;
+    onLogout: () => void;
 }
-const Header: FC<HeaderProps> = ({date, userInfo, onLogout}) => {
-    const user = JSON.parse(userInfo || '')
+
+const Header: FC<HeaderProps> = ({ date, userInfo, headerInfo, onLogout }) => {
+    const info = headerInfo || (userInfo ? JSON.parse(userInfo) : {});
     return (
         <div className="header">
             <div className="left">
-                <Logo className="logo"/>
+                <Logo className="logo" />
                 <p>{date}</p>
             </div>
             <div className="right">
-                <p>{user.isAdmin ? 'Администратор' : user.project}</p>
-                <p>{user.name}</p>
-                <Button type='icon'onClick={onLogout}><LogOut/></Button>
+                <p>
+                    {info.is_admin === 1
+                        ? `Администратор (${info.responsible_fio})`
+                        : `${info.project_name} (${info.responsible_fio})`}
+                </p>
+                <Button type="icon" onClick={onLogout}>
+                    <LogOut />
+                </Button>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Header
+export default Header;
