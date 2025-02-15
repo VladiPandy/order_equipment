@@ -40,6 +40,19 @@ services:
     depends_on:
       - db
 
+  react_app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./.env
+    volumes:
+      - web-static:/app/build
+    depends_on:
+      - api_app
+
   nginx:
     build:
       context: ./nginx
@@ -52,6 +65,7 @@ services:
     depends_on:
       - api_app
       - admin_app
+      - react_app
 
 volumes:
   web-static:

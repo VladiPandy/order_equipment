@@ -1,0 +1,50 @@
+.modal {
+    width: 100%;
+    height: 100vh;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    z-index: 200;
+    
+    .content {
+        width: 50%;
+        max-width: 680px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            .Input, .TextArea, .NumberInput {
+                input {
+                    border: 1px solid var(--color-blue);
+                }
+            }
+        }
+
+        button {
+            border: 1px solid var(--color-blue);
+            font-weight: normal;
+        }
+
+        .buttonCollection {
+            display: flex;
+            gap: 10px;
+            
+            button {
+                width: auto;
+                &:last-of-type {
+                    flex: 1;
+                }
+            }
+        }
+    }
+}

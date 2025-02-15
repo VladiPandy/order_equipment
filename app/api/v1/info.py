@@ -16,7 +16,7 @@ from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
 
 router = APIRouter()
 
-@router.get("/project",
+@router.post("/project",
     response_model=InfoProjectResponse,
     tags=['Информация'],
     summary='Информация о пользователе',
@@ -48,7 +48,7 @@ async def possible_create_booking(
     return calback
 
 
-@router.get("/bookings",
+@router.post("/bookings",
     response_model = List[InfoBookingItem],
     tags = ['Информация'],
     summary = 'Получение таблицы броней',

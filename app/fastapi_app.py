@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -7,7 +8,7 @@ import os
 import django
 
 
-from api.v1 import info, booking
+from api.v1 import info, booking, auth
 from db import postgres
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
@@ -19,8 +20,8 @@ AsyncSessionLocal = None
 async def lifespan(app: FastAPI):
     database_url = (
         f"postgresql+asyncpg://{'DB_USER'}:"
-        f"{'DB_PASSWORD'}@{'localhost'}:"
-        f"{'5432'}/{'DB_NAME'}"
+        f"{'DB_PASSWORD'}@{'db'}:"
+        f"{'5442'}/{'DB_NAME'}"
     )
 
     # Создаем асинхронный движок
@@ -46,9 +47,17 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(info.router, prefix='/api/v1/info', tags=['Информация'])
 app.include_router(booking.router, prefix='/api/v1/booking', tags=['Бронирование'])
+app.include_router(auth.router, prefix='/api/v1/auth', tags=['Авторизация'])
 
 if __name__ == '__main__':
     uvicorn.run(

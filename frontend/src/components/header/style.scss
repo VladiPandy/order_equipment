@@ -1,0 +1,33 @@
+.header {
+    height: 70px;
+    z-index: 10;
+    position: fixed;
+    top: 0;
+    width: calc(100% - 35px);
+    padding: 0 30px 0 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    box-shadow: var(--shadow-down);
+
+    p {
+        font-size: 20px;
+    }
+
+    .left {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .right {    
+        display: flex;
+        align-items: center;
+        gap: 40px;
+    }
+    .logo {
+        width: auto;
+        height: 24px;
+    }
+}

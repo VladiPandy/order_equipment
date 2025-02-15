@@ -1,0 +1,33 @@
+.button {
+    border: var(--border);
+    border-radius: 12px;
+    padding: 9px 23px;
+    font-weight: bold;
+    font-size: 15px;
+
+    &.icon {
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        svg {
+            width: 24px;
+            height: 24px;
+            path {
+                stroke: var(--color-blue)
+            }
+        }
+    }
+
+    &.disabled {
+        opacity: 0.5;
+    }
+
+    &.primary {
+        background-color: var(--color-blue);
+        color: white;
+    }
+
+    &.secondary {
+        color: var(--color-blue);
+    }
+}

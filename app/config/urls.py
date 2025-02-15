@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 
 from user_auth.custom_admin import custom_admin_site
 
+
 admin.site.site_header = "Администратор сервиса бронирования"
 admin.site.site_title = "Администрирование сервиса бронирования"
 admin.site.index_title = "Добро пожаловать в панель управления"

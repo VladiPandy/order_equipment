@@ -60,6 +60,21 @@ def get_django_user_from_request(request: Request, db_async_session):
         return user
 
 
+def check_auth(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        # Извлекаем объект запроса и асинхронную сессию из именованных аргументов
+        request: Request = kwargs.get('request')
+        db_async_session: AsyncSession = kwargs.get('db_async_session')
+
+        print(db_async_session)
+        # Получаем пользователя из Django-сессии
+        user = await get_django_user_from_request(request, db_async_session)
+
+        kwargs['user'] = user
+
+        return await func(*args, **kwargs)
+    return wrapper
 
 def admin_only(func):
     """

@@ -1,0 +1,33 @@
+.navigation {
+    height: 100vh;
+    width: 80px;
+    background-color: var(--color-blue);
+    box-shadow: var(--shadow-right);
+    position: fixed;
+    top: 70px;
+    z-index: 9;
+
+    svg {
+        width: 48px;
+        height: 48px;
+        path {
+            stroke: white;
+        }
+    }
+
+    li {
+        button {
+            background: none;
+            border: none;
+            width: 100%;
+            padding: 13px 0;
+        }
+        // padding: 40px;
+        &.active {
+            background-color: var(--color-main);
+            svg path{
+                stroke: var(--color-blue);
+            }
+        }
+    }
+}
