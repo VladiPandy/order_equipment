@@ -62,7 +62,8 @@ async def get_project_bookings(
         request: Request,
         req_modelx: InfoListsRequest = Body(
             ..., example={
-            "date_period": "19.01.2024-27.10.2024"}),
+            "year": 2025,
+             "week": 25,}),
         db: AsyncSession = Depends(get_db),
         user: object = None
 ) -> InfoListsRequest:
@@ -89,7 +90,8 @@ async def get_project_bookings(
         request: Request,
         req_modelx: InfoListsRequest = Body(
             ..., example={
-            "date_period": "19.01.2024-27.10.2024"}),
+            "year": 2025,
+            "week": 25,}),
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):

@@ -21,7 +21,8 @@ async def possible_create_booking(
         req_model: PossibleCreateBookingRequest = Body(
                 ...,
                 example={
-                    "date_period": "19.01.2024-27.10.2024",
+                    "year": 2025,
+                    "week": 25,
                     "date": 'None',
                     "analyse": 'None',
                     "equipment": 'None',
@@ -103,7 +104,6 @@ async def get_possible_changes(
         req_model: PossibleChangesRequest = Body(
                         ...,
                         example={
-                            "date_period": "19.01.2024-27.10.2024",
                             "id": 2
                         }
                     ),
@@ -129,7 +129,8 @@ async def change_booking(
         req_model: ChangeRequest = Body(
                         ...,
                         example={
-                            "date_period" : "20.01.2024-27.08.2024",
+                            "year": 2025,
+                            "week": 25,
                             "id": 1,
                             "project": "Проект_1",
                             "date": "26.08.2024",
@@ -161,7 +162,6 @@ async def cancel_booking(
     req_model: CancelRequest = Body(
                             ...,
                             example={
-                                "date_period" : "20.01.2024-27.08.2024",
                                 "id": 1
                             }
                         ),

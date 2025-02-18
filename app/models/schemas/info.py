@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 class InfoProjectResponse(BaseModel):
     is_admin: int
@@ -7,15 +7,16 @@ class InfoProjectResponse(BaseModel):
     responsible_fio: str
 
 class InfoListsRequest(BaseModel):
-    date_period: str  # Обязательно, формат "dd.mm.yyyy-dd.mm.yyyy"
+    year: int
+    week: int  # Обязательно, формат "dd.mm.yyyy-dd.mm.yyyy"
 
 class InfoListsResponse(BaseModel):
-    project: List[str]
-    date: List[str]
-    analyse: List[str]
-    equipment: List[str]
-    executor: List[str]
-    status: List[str]
+    project: List
+    date: List
+    analyse: List
+    equipment: List
+    executor: List
+    status: List
 
 class InfoBookingItem(BaseModel):
     id: int

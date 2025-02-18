@@ -30,7 +30,7 @@ class AnalyzePerEquipment(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     equipment_name = models.ForeignKey(Equipment, on_delete=models.CASCADE, verbose_name='Прибор', related_name='equipment_2')
-    analazy = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ_1', related_name='analyze_1')
+    analazy = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ', related_name='analyze_1')
     count_samples = models.IntegerField(default=False, verbose_name='Суточный лимит проб',validators=[MinValueValidator(0),
                                            MaxValueValidator(100)])
 
@@ -47,8 +47,8 @@ class ProjectPerAnalyze(models.Model):
     Модель для представления связи между Проектом и анализом
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    project_n = models.ForeignKey(Project, on_delete=models.CASCADE, verbose_name='Проект_2', related_name='project_2')
-    analazy_n = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ_2', related_name='analyze_2')
+    project_n = models.ForeignKey(Project, on_delete=models.CASCADE, verbose_name='Проект', related_name='project_2')
+    analazy_n = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ', related_name='analyze_2')
     limit_samples = models.IntegerField(default=False, verbose_name='Ограничение по колличеству анализов',validators=[MinValueValidator(0),
                                            MaxValueValidator(100)])
 

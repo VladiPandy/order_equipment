@@ -15,7 +15,7 @@ export const fetchBookingsData = async (datePeriod: string): Promise<DataType[]>
                 // "Authorization": `Basic ${credentials}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ date_period: datePeriod })
+            body: JSON.stringify({ year: 2025, week: 10 })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -54,7 +54,7 @@ export const fetchBookingLists = async (datePeriod: string): Promise<BookingList
                 // "Authorization": `Basic ${credentials}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ date_period: datePeriod })
+            body: JSON.stringify({ year: 2025, week: 10 })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

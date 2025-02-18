@@ -17,19 +17,34 @@ class UserBookingService:
     @staticmethod
     async def validate_date_booking(request) -> None:
         try:
-            if 'date_period' in request:
-                list_date = request['date_period'].split('-')
-                date_start = datetime.datetime.strptime(list_date[0],
-                                                  '%d.%m.%Y').date()
-                date_end = datetime.datetime.strptime(list_date[1],
-                                              '%d.%m.%Y').date()
+            print(request)
+            if 'week' in request and 'year' in request:
+                try:
+                    week = int(request['week'])
+                    year = int(request['year'])
+
+                    date_start = datetime.date.fromisocalendar(year, week, 1)
+                    date_end = datetime.date.fromisocalendar(year, week, 7)
+
+                    num_days = (date_end - date_start).days + 1
+
+                    # Генерируем список дат в формате "dd.mm.yyyy"
+                    dates = [
+                        (date_start + datetime.timedelta(days=i)).strftime(
+                            "%d.%m.%Y")
+                        for i in range(num_days)
+                    ]
+                except Exception as e:
+                    raise HTTPException(status_code=400,
+                                        detail=f"Неверный формат week/year: {e}")
             else:
                 raise HTTPException(status_code=400,
-                                    detail=f"Неверный формат даты date_period")
+                                    detail="Параметры 'week' и 'year' обязательны")
 
             return {
-                'date_start':date_start,
-                'date_end':date_end
+                'date_start': date_start,
+                'date_end': date_end,
+                'dates_list': dates
             }
 
         except Exception as e:
@@ -301,11 +316,14 @@ class UserBookingService:
                                 , eq."name" 
                                 , eq.status 
                                 , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) fio_x
-                                , x.limit_samples - ul.used_limit limit_samples
+                                , x.limit_samples - coalesce(ul.used_limit,0) limit_samples
                                 , x.limit_samples limits_per_eq
-                                , ul.used_limit
+                                , coalesce(ul.used_limit,0)
                                 , eql.count_equipment_per_day
                                 , exl.count_executor_per_day
+                                , z.analazy_id::text
+                                , v.equipment_id::text
+                                , v.operator_id::text
                             FROM generate_series(
                                 DATE '{date_booking_dict['date_start']}'::date, -- Начальная дата
                                 DATE '{date_booking_dict['date_end']}'::date, -- Конечная дата
@@ -364,13 +382,13 @@ class UserBookingService:
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
 
-        if not cookie_createkey and set(request_dict.keys()) == {"date_period"}:
+        if not cookie_createkey and set(request_dict.keys()) == {"year","week"}:
             # Если токен отсутствует, создаем новый
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
             response.set_cookie(key="createkey", value=cookie_createkey)
 
-        if cookie_createkey and set(request_dict.keys()) == {"date_period"}:
+        if cookie_createkey and set(request_dict.keys()) == {"year","week"}:
             # Блокируем старый токен
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
@@ -393,31 +411,46 @@ class UserBookingService:
                                             ''
                                             )
 
+        print(list_availible_values)
+
         if not list_availible_values:
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
-        date_list = []
-        analyze_list = []
-        equipment_list = []
-        executor_list = []
+        date_json = {}
+        analyze_json = {}
+        equipment_json = {}
+        executor_json = {}
         samples_list = []
         samples_used = []
         for val in list_availible_values:
-            date_list.append(str(val[0].strftime('%d.%m.%Y')))
-            analyze_list.append(val[3])
-            equipment_list.append(val[4])
-            executor_list.append(val[6])
+
+            const_date = val[0].strftime('%d.%m.%Y')
+
+            for elem in date_booking_dict['dates_list']:
+                if elem in date_json and  elem == const_date:
+                    date_json[elem] = True
+                else:
+                    date_json[elem] = (elem == const_date)
+            analyze_json[val[12]] = str(val[3])
+            equipment_json[val[13]] = str(val[4])
+            executor_json[val[14]] = str(val[6])
+
             samples_list.append(val[7])
             samples_used.append(val[9])
 
+        print(samples_list)
+        print(samples_used)
+        const_samples_limit = int(list(set(samples_list))[0])
+        const_samples_used = int(list(set(samples_used))[0])
+
         return PossibleCreateBookingResponse(
-            date=list(set(date_list)),
-            analyse=list(set(analyze_list)),
-            equipment=list(set(equipment_list)),
-            executor=list(set(executor_list)),
-            samples_limit=int(list(set(samples_list))[0]),
-            used=int(list(set(samples_used))[0])
+            date=date_json,
+            analyse=analyze_json,
+            equipment=equipment_json,
+            executor=executor_json,
+            samples_limit=const_samples_limit,
+            used=const_samples_used
         )
 
     @staticmethod
@@ -601,19 +634,33 @@ class UserBookingService:
                                 detail="Нет доступных вариантов")
 
             # Преобразуем результаты в списки для формирования ответа
-        date_list = []
-        analyze_list = []
-        equipment_list = []
-        executor_list = []
-        sample_list = []
-        projects_list = []
+        projects_json = {}
+        date_json = {}
+        analyze_json = {}
+        equipment_json = {}
+        executor_json = {}
+        samples_list = []
+        samples_used = []
+
         for val in list_availible_values:
-            projects_list.append(str(val[1]))
-            date_list.append(str(val[0]))
-            analyze_list.append(val[3])
-            equipment_list.append(val[4])
-            executor_list.append(val[6])
-            sample_list.append(val[7])
+
+            const_date = val[0].strftime('%d.%m.%Y')
+
+            for elem in date_booking_dict['dates_list']:
+                if elem in date_json and  elem == const_date:
+                    date_json[elem] = True
+                else:
+                    date_json[elem] = (elem == const_date)
+            analyze_json[val[12]] = str(val[3])
+            equipment_json[val[13]] = str(val[4])
+            executor_json[val[14]] = str(val[6])
+
+            samples_list.append(val[7])
+            samples_used.append(val[9])
+
+        print(samples_list)
+        const_samples_limit = int(list(set(samples_list))[0])
+        const_samples_used = int(list(set(samples_used))[0])
 
         print(booking_info)
         return PossibleChangesResponse(
@@ -628,12 +675,14 @@ class UserBookingService:
                     comment=booking_info['comment'] or ''
                 ),
                 change=ChangeData(
-                    date=list(set(date_list)),
-                    analyse=list(set(analyze_list)),
-                    equipment=list(set(equipment_list)),
-                    executor=list(set(executor_list)),
-                    samples_limit=int(list(set(sample_list))[0]),
-                    status=['на рассмотрении, Исполнено']
+                    date=date_json,
+                    analyse=analyze_json,
+                    equipment=equipment_json,
+                    executor=executor_json,
+                    samples_limit=const_samples_limit,
+                    samples_used = const_samples_used,
+                    status={'1': 'на рассмотрении',
+                            '2': 'Исполнено'}
                 )
             )
 

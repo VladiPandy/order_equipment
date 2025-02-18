@@ -2,11 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional
 
 class PossibleCreateBookingRequest(BaseModel):
-    date_period: str = Field(
-        ...,
-        description="Период в формате dd.mm.yyyy-dd.mm.yyyy",
-        example="19.01.2024-27.10.2024"
-    )
+    year: int
+    week: int
     date: Optional[str] = Field(
         None,
         description="Дополнительное поле; если передается, заполнение запрещено",
@@ -29,10 +26,10 @@ class PossibleCreateBookingRequest(BaseModel):
     )
 
 class PossibleCreateBookingResponse(BaseModel):
-    date: List[str]
-    analyse: List[str]
-    equipment: List[str]
-    executor: List[str]
+    date:  Dict[str, Any]
+    analyse:  Dict[str, Any]
+    equipment:  Dict[str, Any]
+    executor:  Dict[str, Any]
     samples_limit: int
     used: int
 
@@ -49,7 +46,8 @@ class CreateBookingResponse(BaseModel):
 
 
 class PossibleChangesRequest(BaseModel):
-    date_period: str
+    year: int
+    week: int
     id: int
 
 
@@ -63,35 +61,34 @@ class ChoseData(BaseModel):
     status: str
     comment: str
 class ChangeData(BaseModel):
-    date: List[str]
-    analyse: List[str]
-    equipment: List[str]
-    executor: List[str]
+    date: Dict[str, Any]
+    analyse: Dict[str, Any]
+    equipment: Dict[str, Any]
+    executor: Dict[str, Any]
     samples_limit: int
-    status: List[str]
+    samples_used: int
+    status: Dict[str, Any]
 
 class PossibleChangesResponse(BaseModel):
     chose: ChoseData
     change: ChangeData
 
 class ChangeRequest(BaseModel):
-    date_period: str
     id: int
-    project: str          # Для админов
-    date: str     # Формат "dd.mm.yyyy"
+    project: str
+    date: str
     analyze: str
     equipment: str
     executor: str
     samples: int
-    status: str           # Для админов
-    comment: str          # Для админов
+    status: str
+    comment: str
 
 class ChangeResponse(BaseModel):
     id: int
     changed_fields: Dict[str, Dict[str, Any]]
 
 class CancelRequest(BaseModel):
-    date_period: str
     id: int
 
 class CancelResponse(BaseModel):
