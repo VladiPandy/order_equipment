@@ -180,14 +180,13 @@ def update_project_username(sender, instance, **kwargs):
                 pass
 
         if old_instance.is_admin:
-            print(old_instance.is_admin)
-            user.is_staff = False
-            user.is_superuser = False
+            user.is_staff = True
+            user.is_superuser = True
             user.save()
 
         if not old_instance.is_admin:
-            user.is_staff = True
-            user.is_superuser = True
+            user.is_staff = False
+            user.is_superuser = False
             user.save()
 
 @receiver(post_save, sender=Project)

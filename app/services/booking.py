@@ -375,6 +375,7 @@ class UserBookingService:
             cookie_createkey: Optional[str] = None
     ) -> PossibleCreateBookingResponse:
 
+        print(user.is_staff)
         if user.is_staff:
             raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
         request_dict = request_data.dict(exclude_unset=True)
@@ -430,6 +431,8 @@ class UserBookingService:
             for elem in date_booking_dict['dates_list']:
                 if elem in date_json and  elem == const_date:
                     date_json[elem] = True
+                elif elem in date_json :
+                    date_json[elem] = date_json[elem]
                 else:
                     date_json[elem] = (elem == const_date)
             analyze_json[val[12]] = str(val[3])
