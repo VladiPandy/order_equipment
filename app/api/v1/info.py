@@ -30,17 +30,23 @@ async def possible_create_booking(
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
+    responsible_person = await db.execute(text(
+        f"SELECT responsible_person,project_name FROM \"project\" WHERE project_nick = '{user.username}' LIMIT 1;"))
+    items = responsible_person.fetchall()
     if user.is_superuser:
-        calback = {
-            "is_admin" : 1,
-            "project_name" : 'Администратор',
-            "responsible_fio" : user.last_name+' '+user.first_name,
-        }
+        if not items:
+            calback = {
+                "is_admin" : 1,
+                "project_name" : 'Администратор',
+                "responsible_fio" : 'admin',
+            }
+        else:
+            calback = {
+                "is_admin": 0,
+                "project_name": f'Администратор ({items[0][1]})',
+                "responsible_fio": items[0][0],
+            }
     else:
-        responsible_person = await db.execute(text(
-            f"SELECT responsible_person,project_name FROM \"project\" WHERE project_name = '{user.username}' LIMIT 1;"))
-        items = responsible_person.fetchall()
-        print(items)
         calback = {
             "is_admin": 0,
             "project_name": items[0][1],

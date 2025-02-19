@@ -9,14 +9,14 @@ export const useHeaderInfo = (): [HeaderInfo | null, boolean, any] => {
     useEffect(() => {
         const loadHeaderInfo = async () => {
             try {
-                // const username = "project"; // замените на нужный логин
-                // const password = "1234"; // замените на нужный пароль
-                // const credentials = btoa(`${username}:${password}`);
+                const username = "project"; // замените на нужный логин
+                const password = "1234"; // замените на нужный пароль
+                const credentials = btoa(`${username}:${password}`);
 
                 const response = await fetch("http://127.0.0.1/api/v1/info/project", {
                     method: "GET",
                     headers: {
-                        // "Authorization": `Basic ${credentials}`,
+                        "Authorization": `Basic ${credentials}`,
                         "Content-Type": "application/json",
                     },
                 });

@@ -114,7 +114,7 @@ class UserBookingService:
 
         print('date' in data)
         responsible_person = await db.execute(text(
-            f"SELECT id FROM \"project\" WHERE project_name = '{username}' ;"))
+            f"SELECT id FROM \"project\" WHERE project_nick = '{username}' ;"))
         items = responsible_person.scalars().all()
 
         uuids_json = {
@@ -649,6 +649,8 @@ class UserBookingService:
             for elem in date_booking_dict['dates_list']:
                 if elem in date_json and  elem == const_date:
                     date_json[elem] = True
+                elif elem in date_json:
+                    date_json[elem] = date_json[elem]
                 else:
                     date_json[elem] = (elem == const_date)
             analyze_json[val[12]] = str(val[3])
@@ -681,8 +683,14 @@ class UserBookingService:
                     executor=executor_json,
                     samples_limit=const_samples_limit,
                     samples_used = const_samples_used,
-                    status={'1': 'на рассмотрении',
-                            '2': 'Исполнено'}
+                    status={
+                                # '0': 'Не выбран',
+                                "start": 'На рассмотрении',
+                                "get": 'Принято',
+                                "rejected": 'Отклонено',
+                                # "checked": 'Оценить',
+                                # "done": 'Выполнено',
+                            }
                 )
             )
 
@@ -822,7 +830,7 @@ class UserBookingService:
                                WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
                                and '{date_booking_dict['date_start']}' between '{date_booking_dict['date_end']}'
                                and :date_end
-                               {block_query} and p.project_name = '{user.username}'
+                               {block_query} and p.project_nick = '{user.username}'
                                LIMIT 1
                            """)
 

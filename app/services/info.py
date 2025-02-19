@@ -45,7 +45,7 @@ class UserInfoService:
         else:
             query = text("""
                 WITH uuid_project AS (
-                    SELECT id, project_name FROM "project" WHERE project_name = :username
+                    SELECT id, project_name FROM "project" WHERE project_nick = :username
                 )
                 SELECT y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.status
                 FROM projects_booking x
@@ -138,7 +138,7 @@ class UserInfoService:
         else:
             query = text("""
                     WITH uuid_project AS (
-                        SELECT id, project_name FROM "project" WHERE project_name = :username
+                        SELECT id, project_name FROM "project" WHERE project_nick = :username
                     )
                     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
                         , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
