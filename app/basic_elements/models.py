@@ -95,12 +95,123 @@ class Executor(UUIDMixin, TimeStampedMixin):
     def __str__(self):
         return f"{self.first_name}  {self.last_name}  {self.patronymic}"
 
+# Модель Администратора
+class Adminstrator(UUIDMixin, TimeStampedMixin):
+    admin_nick = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name='Логин для авторизации'
+    )
+    admin_person = models.CharField(
+        max_length=255,
+        verbose_name='Данные ответственного'
+    )
+    admin_password = models.CharField(
+        max_length=128,
+        verbose_name='Пароль для входа'
+    )
+
+    class Meta:
+        db_table = 'public"."adminstrator'
+        verbose_name = 'Администратор'
+        verbose_name_plural = 'Администраторы'
+
+    def __str__(self):
+        return f"Администратор {self.admin_person}"
+
+    def clean(self):
+        """
+        Дополнительная валидация имени проекта.
+        """
+        if not self.admin_nick.isalnum():
+            raise ValidationError("Никнейм проекта должен содержать буквенно-цифровые символы.")
+
+            # Проверка project_password: минимальная длина 8 символов
+        if len(self.admin_password) < 8:
+            raise ValidationError(
+                "Пароль для входа должен содержать не менее 8 символов.")
+
+        # Дополнительные проверки пароля можно добавить, например:
+        # Проверка на наличие хотя бы одной буквы и одной цифры:
+        if not re.search(r"[A-Za-z]",
+                         self.admin_password) or not re.search(r"\d",
+                                                                 self.admin_password):
+            raise ValidationError(
+                "Пароль должен содержать хотя бы одну букву и одну цифру.")
+
+        super().clean()
+
+
+@receiver(pre_save, sender=Adminstrator)
+def update_project_username(sender, instance, **kwargs):
+    """
+    При обновлении проекта проверяет, изменилось ли имя проекта.
+    Если да, пытается найти пользователя с предыдущим именем и обновляет его username.
+    """
+    if instance.pk:
+        try:
+            old_instance = Adminstrator.objects.get(pk=instance.pk)
+        except Adminstrator.DoesNotExist:
+            return
+
+        user = User.objects.get(username=instance.admin_nick)
+        # Проверка изменения имени проекта (project_nick)
+        if old_instance.admin_nick != instance.admin_nick:
+            try:
+                user.username = instance.admin_nick
+                user.save()
+            except ObjectDoesNotExist:
+                # Если пользователь не найден, ничего не делаем.
+                pass
+
+        # Проверка изменения пароля проекта (project_password)
+        if old_instance.admin_password != instance.admin_password:
+            try:
+                user.set_password(instance.admin_password)
+                user.save()
+            except ObjectDoesNotExist:
+                # Если пользователь не найден, ничего не делаем.
+                pass
+
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+
+@receiver(post_save, sender=Adminstrator)
+def create_user_for_project(sender, instance: Adminstrator, created: bool, **kwargs) -> None:
+    """
+    После создания проекта:
+    - Создаёт пользователя с именем, равным project_name, и указанным паролем.
+    - Если проект имеет приоритет (is_priority=True), пользователь становится администратором.
+    """
+    if created:
+        username = instance.admin_nick
+        new_user = User.objects.create_user(
+            username=username,
+            password=instance.admin_password
+        )
+        new_user.is_staff = True
+        new_user.is_superuser = True
+        new_user.save()
+
+@receiver(post_delete, sender=Adminstrator)
+def delete_project_user(sender, instance, **kwargs):
+    """
+    После удаления проекта:
+      - Удаляем пользователя, ассоциированного с проектом (по username, равному project_nick).
+    """
+    try:
+        user = User.objects.get(username=instance.admin_nick)
+        user.delete()
+    except User.DoesNotExist:
+        pass
+
 # Модель Проекта
 class Project(UUIDMixin, TimeStampedMixin):
     project_nick = models.CharField(
         max_length=255,
         unique=True,
-        verbose_name='Ник для авторизации'
+        verbose_name='Логин для авторизации'
     )
     project_name = models.CharField(
         max_length=255,
@@ -108,10 +219,10 @@ class Project(UUIDMixin, TimeStampedMixin):
         verbose_name='Проект'
     )
     is_priority = models.BooleanField(verbose_name='Имеет приоритет')
-    is_admin = models.BooleanField(verbose_name='Является администратором')
+    # is_admin = models.BooleanField(verbose_name='Является администратором')
     responsible_person = models.CharField(
         max_length=255,
-        verbose_name='Ответственный за проект'
+        verbose_name='Руководитель проекта'
     )
     project_password = models.CharField(
         max_length=128,
@@ -179,15 +290,19 @@ def update_project_username(sender, instance, **kwargs):
                 # Если пользователь не найден, ничего не делаем.
                 pass
 
-        if old_instance.is_admin:
-            user.is_staff = True
-            user.is_superuser = True
-            user.save()
+        user.is_staff = False
+        user.is_superuser = False
+        user.save()
 
-        if not old_instance.is_admin:
-            user.is_staff = False
-            user.is_superuser = False
-            user.save()
+        # if old_instance.is_admin:
+        #     user.is_staff = True
+        #     user.is_superuser = True
+        #     user.save()
+        #
+        # if not old_instance.is_admin:
+        #     user.is_staff = False
+        #     user.is_superuser = False
+        #     user.save()
 
 @receiver(post_save, sender=Project)
 def create_user_for_project(sender, instance: Project, created: bool, **kwargs) -> None:
@@ -202,10 +317,9 @@ def create_user_for_project(sender, instance: Project, created: bool, **kwargs) 
             username=username,
             password=instance.project_password
         )
-        if instance.is_priority:
-            new_user.is_staff = True
-            new_user.is_superuser = True
-            new_user.save()
+        new_user.is_staff = False
+        new_user.is_superuser = False
+        new_user.save()
 
 @receiver(post_delete, sender=Project)
 def delete_project_user(sender, instance, **kwargs):

@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.schemas.booking import PossibleCreateBookingRequest, \
     PossibleCreateBookingResponse, CreateBookingResponse, \
     CreateBookingRequest, PossibleChangesResponse, PossibleChangesRequest, \
-    ChangeResponse, ChangeRequest, CancelRequest, CancelResponse
+    ChangeResponse, ChangeRequest, CancelRequest, CancelResponse, \
+    FeedbackResponse, FeedbackRequest
 from services.booking import UserBookingService
 from db.postgres import get_db
 
@@ -12,36 +13,38 @@ from services.wrappers import admin_only, admin_or_current_user_only
 router = APIRouter()
 
 
-@router.post("/possible_create",
+@router.get("/possible_create",
             response_model=PossibleCreateBookingResponse)
 @admin_or_current_user_only
 async def possible_create_booking(
         request: Request,
         response: Response,
-        req_model: PossibleCreateBookingRequest = Body(
-                ...,
-                example={
-                    "year": 2025,
-                    "week": 25,
-                    "date": 'None',
-                    "analyse": 'None',
-                    "equipment": 'None',
-                    "executor": 'None'
-                }
-            ),
+        # req_model: PossibleCreateBookingRequest = Body(
+        #         ...,
+        #         example={
+        #             "date": 'None',
+        #             "analyse": 'None',
+        #             "equipment": 'None',
+        #             "executor": 'None'
+        #         }
+        #     ),
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
-    data = await request.json()
     print('user')
     try:
-        request_model = PossibleCreateBookingRequest(**data)
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+        data_check = data if data else {}
+        request_model = PossibleCreateBookingRequest(**data_check)
     except Exception as e:
         raise HTTPException(status_code=400,
                             detail=f"Неверные входные данные: {e}")
 
     cookie_createkey = request.cookies.get("createkey")
-    print(cookie_createkey)
     result = await UserBookingService.get_possible_create_booking(
         request_data=request_model,
         response=response,
@@ -97,16 +100,16 @@ async def create_booking_row(
     }
 
 
-@router.post("/possible_changes", response_model=PossibleChangesResponse)
+@router.get("/possible_changes", response_model=PossibleChangesResponse)
 @admin_or_current_user_only
 async def get_possible_changes(
         request: Request,
-        req_model: PossibleChangesRequest = Body(
-                        ...,
-                        example={
-                            "id": 2
-                        }
-                    ),
+        # req_model: PossibleChangesRequest = Body(
+        #                 ...,
+        #                 example={
+        #                     "id": 2
+        #                 }
+        #             ),
         user: object = None,
         db: AsyncSession = Depends(get_db)
 ):
@@ -129,8 +132,6 @@ async def change_booking(
         req_model: ChangeRequest = Body(
                         ...,
                         example={
-                            "year": 2025,
-                            "week": 25,
                             "id": 1,
                             "project": "Проект_1",
                             "date": "26.08.2024",
@@ -178,26 +179,28 @@ async def cancel_booking(
 
 
 @router.post("/feedback",
-            response_model=PossibleCreateBookingResponse)
+            response_model=FeedbackResponse)
 @admin_or_current_user_only
 async def possible_create_booking(
         request: Request,
         response: Response,
-        req_model: PossibleCreateBookingRequest = Body(
+        req_model: FeedbackRequest = Body(
                 ...,
                 example={
-                    "date_period": "19.01.2024-27.10.2024",
-                    "id": 2
+                    "id": 2,
+                    "question_1": True,
+                    "question_2": False,
+                    "question_3": False
                 }
             ),
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
     pass
-    # try:
-    #     data = await request.json()
-    #     req_model = CancelRequest(**data)
-    # except Exception as e:
-    #     raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
-    #
-    # return await UserBookingService.cancel_booking(req_model,user, db)
+    try:
+        data = await request.json()
+        req_model = FeedbackRequest(**data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
+
+    return await UserBookingService.feedback_booking(req_model,user, db)

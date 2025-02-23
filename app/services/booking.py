@@ -1,55 +1,124 @@
 import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Request, Response, Depends, HTTPException
 from typing import Dict, List, Any
+import json
 
 from models.schemas.booking import PossibleCreateBookingRequest, \
     PossibleCreateBookingResponse, CreateBookingResponse, \
     CreateBookingRequest, PossibleChangesResponse, PossibleChangesRequest, \
     ChoseData, ChangeData, ChangeRequest, ChangeResponse, CancelResponse, \
-    CancelRequest
+    CancelRequest, FeedbackResponse, FeedbackRequest
 
 
 class UserBookingService:
+
     @staticmethod
-    async def validate_date_booking(request) -> None:
+    async def parse_date(date_str: str) -> datetime.date:
+        """
+        Преобразует строку в объект datetime.date, пытаясь два формата:
+        - '%d-%m-%Y'
+        - '%d-%m-%y'
+
+        :param date_str: Строка с датой.
+        :return: Объект datetime.date.
+        :raises ValueError: Если ни один формат не подходит.
+        """
+        print(date_str)
+        for fmt in ('%y-%m-%d','%Y-%m-%d','%d-%m-%Y', '%d-%m-%y','%d.%m.%Y', '%d.%m.%y'):
+            try:
+                return datetime.strptime(str(date_str), fmt).date()
+            except ValueError:
+                continue
+
+    @staticmethod
+    async def validate_date_booking(request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Валидирует и определяет диапазон дат для бронирования.
+
+        Если в запросе присутствуют ключи 'start' и 'end', пытается их разобрать.
+        Если их нет, то устанавливает диапазон от текущего дня - 2 недели до текущего дня + 2 недели.
+        Также поддерживается вариант, когда переданы параметры 'week' и 'year'
+        для расчета начала и конца недели по ISO календарю.
+
+        :param request: Словарь с параметрами запроса.
+        :return: Словарь с date_start, date_end и dates_list (список дат в формате "dd.mm.yyyy").
+        :raises HTTPException: При ошибке валидации.
+        """
+        print('certian_date' in request)
         try:
-            print(request)
-            if 'week' in request and 'year' in request:
+            # Если переданы параметры start и end, пытаемся их разобрать.
+            if 'start' in request and request['start']:
+                try:
+                    date_start = await UserBookingService.parse_date(request['start'])
+
+                except ValueError as e:
+                    raise HTTPException(status_code=400,
+                                        detail=f"Ошибка формата start: {e}")
+
+                if 'end' in request and request['end']:
+                    try:
+                        date_end = await UserBookingService.parse_date(request['end'])
+                    except ValueError as e:
+                        raise HTTPException(status_code=400,
+                                            detail=f"Ошибка формата end: {e}")
+                else:
+                    # Если end не указан, берем диапазон 2 недели назад и 2 недели вперед от сегодня.
+                    today = datetime.today().date()
+                    date_start = today - timedelta(weeks=2)
+                    date_end = today + timedelta(weeks=2)
+            # Если параметров start/end нет, но есть week и year - используем их.
+            elif 'certian_date' in request and request['certian_date']:
+                try:
+                    certian_date = await UserBookingService.parse_date(request['certian_date'])
+
+                    week = certian_date.isocalendar()[1]
+                    year = certian_date.isocalendar()[0]
+                    date_start = datetime.fromisocalendar(year, week, 1).date()
+                    date_end = datetime.fromisocalendar(year, week, 7).date()
+                except Exception as e:
+                    raise HTTPException(status_code=400,
+                                        detail=f"Неверный формат week/year: {e}")
+
+            elif 'week' in request and 'year' in request:
                 try:
                     week = int(request['week'])
                     year = int(request['year'])
-
-                    date_start = datetime.date.fromisocalendar(year, week, 1)
-                    date_end = datetime.date.fromisocalendar(year, week, 7)
-
-                    num_days = (date_end - date_start).days + 1
-
-                    # Генерируем список дат в формате "dd.mm.yyyy"
-                    dates = [
-                        (date_start + datetime.timedelta(days=i)).strftime(
-                            "%d.%m.%Y")
-                        for i in range(num_days)
-                    ]
+                    date_start = datetime.fromisocalendar(year, week, 1).date()
+                    date_end = datetime.fromisocalendar(year, week, 7).date()
                 except Exception as e:
                     raise HTTPException(status_code=400,
                                         detail=f"Неверный формат week/year: {e}")
             else:
+                # Если ни start/end, ни week/year не переданы, устанавливаем диапазон по умолчанию.
+                today = datetime.today().date()
+                date_start = today - timedelta(weeks=2)
+                date_end = today + timedelta(weeks=2)
+
+            print(date_start)
+            print(date_end)
+            if date_start > date_end:
                 raise HTTPException(status_code=400,
-                                    detail="Параметры 'week' и 'year' обязательны")
+                                    detail="Дата начала не может быть позже даты окончания.")
+
+            # Генерируем список дат в формате "dd.mm.yyyy" от date_start до date_end включительно.
+            num_days = (date_end - date_start).days + 1
+            dates = [
+                (date_start + timedelta(days=i)).strftime("%d.%m.%Y")
+                for i in range(num_days)
+            ]
 
             return {
                 'date_start': date_start,
                 'date_end': date_end,
                 'dates_list': dates
             }
-
         except Exception as e:
             raise HTTPException(status_code=400,
-                                detail=f"Нет обязательного ключа date_period")
+                                detail=f"Ошибка валидации дат: {e}")
 
     @staticmethod
     async def get_uuids(db: AsyncSession,username, data) -> None:
@@ -57,13 +126,13 @@ class UserBookingService:
         try:
             if 'date' in data:
 
-                date_val = datetime.datetime.strptime(data['date'],
+                date_val = datetime.strptime(data['date'],
                                                       '%d.%m.%Y').date()
                 date_text = f"""date = '{date_val}'"""
 
             else:
                 date_text = '1 = 1'
-                date_val = datetime.datetime.strptime('20.01.5999',
+                date_val = datetime.strptime('20.01.5999',
                                                       '%d.%m.%Y').date()
         except Exception as e:
             raise HTTPException(status_code=400,
@@ -152,7 +221,7 @@ class UserBookingService:
         if effective_ts is None:
             raise HTTPException(status_code=403,
                                 detail="Отсутствует временная метка в токене")
-        now = datetime.datetime.utcnow()
+        now = datetime.utcnow()
         if now - effective_ts > timedelta(minutes=5):
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
@@ -367,6 +436,48 @@ class UserBookingService:
         return list_availible_values
 
     @staticmethod
+    async def get_period(
+            db: AsyncSession,
+            user: object,
+            request_dict_prev: Dict
+    ) -> None:
+        responsible_person = await db.execute(text(
+            f"SELECT responsible_person,project_name, is_priority  FROM \"project\" WHERE project_nick = '{user.username}' LIMIT 1;"))
+        items = responsible_person.fetchall()
+
+        today = datetime.today()
+        date_str = today.strftime('%d.%m.%Y')
+        time_str = today.strftime('%H:%M')
+        is_open_global = await db.execute(text(
+            f"""SELECT week_period  FROM \"control_enter_openwindowforordering\" 
+                        WHERE start_date = '{date_str}'
+                        and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) and for_priority = {items[0][2]}
+                        ;"""))
+        is_open_items = is_open_global.fetchall()
+        print('is_open_items')
+        print(is_open_items)
+        if not is_open_items:
+            is_open_local = await db.execute(text(
+                f"""SELECT week_period  FROM \"control_enter_isopenregistration\" 
+                                    WHERE is_open = True
+                                    ;"""))
+            is_open_l_items = is_open_local.fetchall()
+            print(is_open_l_items)
+        else:
+            is_open_l_items = None
+        if is_open_l_items and is_open_items :
+            raise HTTPException(status_code=403,
+                                detail="Создание записи запрещено администратором.")
+        else:
+            choose_not_null = is_open_l_items[0][0] if not is_open_items else is_open_items[0][0]
+            start_date, end_date = choose_not_null.split('-')
+            # Формируем словарь с ключами 'start' и 'end'
+            request_dict_prev['start'] =  start_date.strip()
+            request_dict_prev['end'] = end_date.strip()
+            # Преобразуем словарь в JSON-строку
+            return request_dict_prev
+
+    @staticmethod
     async def get_possible_create_booking(
             request_data: PossibleCreateBookingRequest,
             response,
@@ -375,21 +486,23 @@ class UserBookingService:
             cookie_createkey: Optional[str] = None
     ) -> PossibleCreateBookingResponse:
 
-        print(user.is_staff)
-        if user.is_staff:
+        if user.is_superuser:
             raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
-        request_dict = request_data.dict(exclude_unset=True)
+        request_dict_prev = request_data.dict(exclude_unset=True)
 
+        request_dict = await UserBookingService.get_period(
+            db,user,
+            request_dict_prev)
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
+        print('date_booking_dict')
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
-
-        if not cookie_createkey and set(request_dict.keys()) == {"year","week"}:
+        if not cookie_createkey and set(request_dict.keys()) == {"start","end"}:
             # Если токен отсутствует, создаем новый
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
             response.set_cookie(key="createkey", value=cookie_createkey)
 
-        if cookie_createkey and set(request_dict.keys()) == {"year","week"}:
+        if cookie_createkey and set(request_dict.keys()) == {"start","end"}:
             # Блокируем старый токен
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
@@ -442,8 +555,7 @@ class UserBookingService:
             samples_list.append(val[7])
             samples_used.append(val[9])
 
-        print(samples_list)
-        print(samples_used)
+        print(uuids_json)
         const_samples_limit = int(list(set(samples_list))[0])
         const_samples_used = int(list(set(samples_used))[0])
 
@@ -589,25 +701,23 @@ class UserBookingService:
             raise HTTPException(status_code=403, detail="Изменение записи пользователем запрещено")
         request_dict = request_data.dict(exclude_unset=True)
 
-        print(request_dict)
+        # request_dict = await UserBookingService.get_period(
+        #     db, user)
+        #
 
-        date_booking_dict = await UserBookingService.validate_date_booking(
-            request_dict)
-
-        print(date_booking_dict)
 
         # Пример запроса для получения данных по заявке (адаптируйте по вашей схеме)
         query = text("""
                SELECT project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status, comment
                FROM projects_booking
-               WHERE id = :booking_id and is_delete = False and date_booking between :date_start and :date_end
+               WHERE id = :booking_id and is_delete = False  and status not in  ('Оценить')
                LIMIT 1
            """)
 
         result = await db.execute(query, {
-            "booking_id": request_dict['id'],
-            "date_start" : date_booking_dict['date_start'],
-            "date_end": date_booking_dict['date_end']
+            "booking_id": request_dict['id']
+            # "date_start" : date_booking_dict['date_start'],
+            # "date_end": date_booking_dict['date_end']
         })
         row = result.fetchone()
         print(row)
@@ -620,11 +730,17 @@ class UserBookingService:
         # Распаковываем полученные данные
         project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status, comment = row
 
+        request_dict['certian_date'] = date_booking
+
+        date_booking_dict = await UserBookingService.validate_date_booking(
+            request_dict)
+
         request_dict['date_booking'] = date_booking.strftime('%d.%m.%Y')
         request_dict['analyze_id'] = analyse_id
 
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                         request_dict)
+        print(date_booking_dict)
         print('uuids_json')
         list_availible_values = await UserBookingService.availible_values(db,
                                                                           uuids_json,
@@ -787,7 +903,7 @@ class UserBookingService:
         update_query = text(f"""
                UPDATE public.projects_booking
                SET project_id = '{booking_info["project_id"]}',
-                   date_booking = '{datetime.datetime.strptime(request_dict['date'],
+                   date_booking = '{datetime.strptime(request_dict['date'],
                                               '%d.%m.%Y').date()}',
                    analyse_id = {uuids_json["analyze_id"]},
                    equipment_id = {uuids_json["equipment_id"]},
@@ -821,8 +937,8 @@ class UserBookingService:
 
         request_dict = request_data.dict(exclude_unset=True)
 
-        date_booking_dict = await UserBookingService.validate_date_booking(
-            request_dict)
+        # date_booking_dict = await UserBookingService.validate_date_booking(
+        #     request_dict)
 
 
         block_query = '-----' if user.is_staff  else ''
@@ -831,7 +947,6 @@ class UserBookingService:
                                FROM projects_booking x
                                join project p on p.id = x.project_id
                                WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
-                               and '{date_booking_dict['date_start']}' between '{date_booking_dict['date_end']}'
                                and :date_end
                                {block_query} and p.project_nick = '{user.username}'
                                LIMIT 1
@@ -868,3 +983,10 @@ class UserBookingService:
                 raise HTTPException(status_code=500,
                                     detail=f"Ошибка при обновлении записи: {e}")
 
+    @staticmethod
+    async def feedback_booking(
+            request_data: FeedbackRequest,
+            user,
+            db: AsyncSession,
+    ) -> FeedbackResponse:
+        pass

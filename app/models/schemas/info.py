@@ -5,10 +5,11 @@ class InfoProjectResponse(BaseModel):
     is_admin: int
     project_name: str
     responsible_fio: str
+    is_open: int
 
 class InfoListsRequest(BaseModel):
-    year: int
-    week: int  # Обязательно, формат "dd.mm.yyyy-dd.mm.yyyy"
+    start: Optional[str] = None  # Поле start может быть строкой или отсутствовать
+    end: Optional[str] = None
 
 class InfoListsResponse(BaseModel):
     project: List

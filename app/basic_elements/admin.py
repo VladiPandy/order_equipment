@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Equipment, Analyze, Executor, Project, AnalyzeType
+from .models import Equipment, Analyze, Executor, Project, AnalyzeType, Adminstrator
 # from .models import (Analyze, Equipment, Operator, Project, WorkingDayOfWeek, IsWorkingDay, Status,
 #                      AnalyzePerEquipment, OperatorPerEquipment, OperatorPerWeek, ProjectPerAnalyze,
 #                      ProjectOrderingEquipment, OpenWindowForOrdering, IsOpenRegistration)
@@ -39,4 +39,8 @@ class ExecutorAdmin(admin.ModelAdmin):
 
 @admin.register(Project,site=custom_admin_site)
 class ProjectAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Adminstrator,site=custom_admin_site)
+class AdminstratorAdmin(admin.ModelAdmin):
     pass

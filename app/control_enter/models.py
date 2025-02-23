@@ -6,6 +6,27 @@ from datetime import datetime, timedelta
 from basic_elements.models import *
 
 
+def get_week_period_choices() -> list[tuple[str, str]]:
+    """
+    Функция возвращает список кортежей с выбором периода недели с понедельника по воскресенье
+    на 12 недель вперед. Каждый кортеж имеет вид (значение, отображаемое значение).
+
+    :return: Список кортежей с периодами недели в формате 'dd.mm.yyyy-dd.mm.yyyy'
+    """
+    today = datetime.today()
+    # Определяем понедельник текущей недели.
+    current_monday = today - timedelta(days=today.weekday())
+    choices = [
+        (
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
+        )
+        for i in range(12)
+    ]
+    return choices
+
 class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     """
     Модель для представления рабочих дней недели
@@ -74,12 +95,21 @@ class OpenWindowForOrdering(models.Model):
     end_time = models.CharField(max_length=50, choices=TIME_CHOICES, verbose_name='Время закрытия бронирования')
     for_priority = models.BooleanField(default=False, verbose_name='Для приоритетных')
 
+    week_period = models.CharField(
+        max_length=50,
+        choices=get_week_period_choices(),
+        # функция будет вызвана для формирования списка вариантов
+        verbose_name='Период недели (с понедельника по воскресенье)'
+    )
+
     class Meta:
         verbose_name = 'Окно для заказа'
         verbose_name_plural = 'Окна для заказа'
 
     def __str__(self):
-        return f"Окно бронирования на {self.start_date} с {self.start_time} до {self.end_time}"
+        return (
+            f"Окно бронирования на {self.start_date} с {self.start_time} до {self.end_time}, "
+            f"период недели: {self.week_period}")
 
 class IsOpenRegistration(models.Model):
     """
@@ -87,14 +117,45 @@ class IsOpenRegistration(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     is_open = models.BooleanField(default=False, verbose_name='Открыть регистрацию')
+
+    week_period = models.CharField(
+        max_length=50,
+        choices=get_week_period_choices(),
+        # функция будет вызвана для формирования списка вариантов
+        verbose_name='Период недели (с понедельника по воскресенье)'
+    )
+
     create_timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Время создания')
+
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+        if self.is_open:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if IsOpenRegistration.objects.filter(is_open=True).exclude(
+                    pk=self.pk).exists():
+                raise ValidationError(
+                    "Открытая регистрация уже существует. Должна быть только одна открытая регистрация."
+                )
+
+    def save(self, *args: any, **kwargs: any) -> None:
+        """
+        Переопределение метода save для вызова проверки clean перед сохранением.
+        Это гарантирует, что правило о единственности открытой регистрации соблюдается.
+        """
+        self.full_clean()  # вызывает clean() и проводит валидацию модели
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Статус открытой регистрации'
         verbose_name_plural = 'Статусы открытой регистрации'
 
     def __str__(self):
-        return "Открыта" if self.is_open else "Закрыта"
+        return ("Открыта" if self.is_open else "Закрыта") + f" период недели: {self.week_period}"
 
 
 class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):

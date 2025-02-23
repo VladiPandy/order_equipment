@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional
 
 class PossibleCreateBookingRequest(BaseModel):
-    year: int
-    week: int
     date: Optional[str] = Field(
         None,
         description="Дополнительное поле; если передается, заполнение запрещено",
@@ -44,11 +42,28 @@ class CreateBookingRequest(BaseModel):
 class CreateBookingResponse(BaseModel):
     id: int
 
-
 class PossibleChangesRequest(BaseModel):
-    year: int
-    week: int
     id: int
+    date: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="26.08.2024"
+    )
+    analyse: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Анализ 1"
+    )
+    equipment: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Прибор 1"
+    )
+    executor: Optional[str] = Field(
+        None,
+        description="Дополнительное поле; если передается, заполнение запрещено",
+        example="Иванов Иван Дмитриевич"
+    )
 
 
 class ChoseData(BaseModel):
@@ -77,7 +92,7 @@ class ChangeRequest(BaseModel):
     id: int
     project: str
     date: str
-    analyze: str
+    analyse: str
     equipment: str
     executor: str
     samples: int
@@ -92,5 +107,18 @@ class CancelRequest(BaseModel):
     id: int
 
 class CancelResponse(BaseModel):
+    id: int
+    data: str
+
+class FeedbackRequest(BaseModel):
+    id: int
+    question_1: bool
+    question_2: bool
+    question_3: bool
+
+
+
+
+class FeedbackResponse(BaseModel):
     id: int
     data: str

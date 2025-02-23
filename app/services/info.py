@@ -114,7 +114,7 @@ class UserInfoService:
     ) -> InfoBookingItem:
         # 1. Парсинг даты
         request_dict = request_data.dict(exclude_unset=True)
-
+        print(request_dict)
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
@@ -157,9 +157,6 @@ class UserInfoService:
 
         result = await db.execute(query, params)
         rows = result.fetchall()
-
-        print('rows')
-        print(rows)
 
         if not rows:
             return []  # Возвращаем пустой список, если данных нет
