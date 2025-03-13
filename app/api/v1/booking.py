@@ -31,7 +31,6 @@ async def possible_create_booking(
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
-    print('user')
     try:
         body_bytes = await request.body()
         if not body_bytes:
@@ -78,7 +77,6 @@ async def create_booking_row(
         user: object = None
 ):
     data = await request.json()
-    print(data)
     try:
         request_model = CreateBookingRequest(**data)
     except Exception as e:
@@ -86,7 +84,6 @@ async def create_booking_row(
                             detail=f"Неверные входные данные: {e}")
 
     cookie_createkey = request.cookies.get("createkey")
-    print(user)
     id_create = await  UserBookingService.create_booking(
         request_data=request_model,
         response=response,

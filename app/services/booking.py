@@ -489,26 +489,30 @@ class UserBookingService:
         if user.is_superuser:
             raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
         request_dict_prev = request_data.dict(exclude_unset=True)
-
+        print('request_dict_prev')
+        print(request_dict_prev)
         request_dict = await UserBookingService.get_period(
             db,user,
             request_dict_prev)
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
         print('date_booking_dict')
+        print(set(request_dict.keys()))
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
         if not cookie_createkey and set(request_dict.keys()) == {"start","end"}:
             # Если токен отсутствует, создаем новый
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
+
             response.set_cookie(key="createkey", value=cookie_createkey)
 
-        if cookie_createkey and set(request_dict.keys()) == {"start","end"}:
+        elif cookie_createkey and set(request_dict.keys()) == {"start","end"}:
             # Блокируем старый токен
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
             # Если токен отсутствует, создаем новый
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
-                                                                          uuids_json['user_id'])
+                                                                            uuids_json['user_id'])
+
             response.set_cookie(key="createkey", value=cookie_createkey)
 
         # Если токен передан, проверяем его срок действия
@@ -524,8 +528,6 @@ class UserBookingService:
                                             date_booking_dict,
                                             ''
                                             )
-
-        print(list_availible_values)
 
         if not list_availible_values:
             raise HTTPException(status_code=404,
@@ -599,22 +601,17 @@ class UserBookingService:
     ) -> int:
 
         request_dict = request_data.dict(exclude_unset=True)
-        print('request_dict')
-        print(request_dict)
         if not cookie_createkey:
             raise HTTPException(status_code=403, detail="Запись запрещена")
 
         await UserBookingService.validate_token(db, cookie_createkey)
 
-        print(user)
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                     request_dict)
 
         await UserBookingService.checking_blocking_period_with_creating(db, uuids_json,
                                            cookie_createkey)
 
-        print(request_dict)
-        print(uuids_json)
         insert_query = text(f"""
                 INSERT INTO public.projects_booking
                 (project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status,is_delete,comment)
@@ -725,8 +722,6 @@ class UserBookingService:
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         booking_info = await UserBookingService.booking_info(db,row)
-
-        print(booking_info)
         # Распаковываем полученные данные
         project_id, date_booking, analyse_id, equipment_id, executor_id, count_analyses, status, comment = row
 
@@ -752,7 +747,6 @@ class UserBookingService:
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
-            # Преобразуем результаты в списки для формирования ответа
         projects_json = {}
         date_json = {}
         analyze_json = {}
@@ -837,7 +831,6 @@ class UserBookingService:
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
-        print(date_booking_dict)
 
         # Пример запроса для получения данных по заявке (адаптируйте по вашей схеме)
         query = text("""
@@ -892,9 +885,6 @@ class UserBookingService:
             changes["comment"] = {"old": booking_info.get("comment"),
                                   "new": request_dict["comment"]}
 
-        print(changes)
-        print('----')
-        print(uuids_json)
         #5. Если изменений нет, возвращаем сообщение с пустым changed_fields
         if not changes:
             return ChangeResponse(id=request_dict['id'], changed_fields={})

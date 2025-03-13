@@ -3,19 +3,19 @@ import { BookingListsResponse } from "../types";
 
 export const fetchBookingsData = async (datePeriod: string): Promise<DataType[]> => {
     try {
-        // const username = "admin"; // замените на нужный логин
-        // const password = "admin"; // замените на нужный пароль
-        // const credentials = btoa(`${username}:${password}`);
+        const username = "project1"; // замените на нужный логин
+        const password = "project1"; // замените на нужный пароль
+        const credentials = btoa(`${username}:${password}`);
         // console.log(datePeriod)
-        const url = new URL("http://127.0.0.1/api/v1/info/bookings");
+        const url = new URL("http://80.209.240.64/api/v1/info/bookings");
 
         const response = await fetch(url.toString(), {
-            method: "POST",
+            method: "GET",
             headers: {
-                // "Authorization": `Basic ${credentials}`,
+                "Authorization": `Basic ${credentials}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ year: 2025, week: 10 })
+            // body: JSON.stringify({ year: 2025, week: 10 })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -45,16 +45,16 @@ export const fetchBookingsData = async (datePeriod: string): Promise<DataType[]>
 
 export const fetchBookingLists = async (datePeriod: string): Promise<BookingListsResponse> => {
     try {
-        // const username = "admin"; // замените на нужный логин
-        // const password = "admin"; // замените на нужный пароль
-        // const credentials = btoa(`${username}:${password}`);
-        const response = await fetch("http://127.0.0.1/api/v1/info/booking_lists", {
-            method: "POST",
+        const username = "project1"; // замените на нужный логин
+        const password = "project1"; // замените на нужный пароль
+        const credentials = btoa(`${username}:${password}`);
+        const response = await fetch("http://80.209.240.64/api/v1/info/booking_lists", {
+            method: "GET",
             headers: {
-                // "Authorization": `Basic ${credentials}`,
+                "Authorization": `Basic ${credentials}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ year: 2025, week: 10 })
+            // body: JSON.stringify({ year: 2025, week: 10 })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

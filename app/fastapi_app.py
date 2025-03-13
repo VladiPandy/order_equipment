@@ -20,7 +20,7 @@ AsyncSessionLocal = None
 async def lifespan(app: FastAPI):
     database_url = (
         f"postgresql+asyncpg://{'DB_USER'}:"
-        f"{'DB_PASSWORD'}@{'db'}:"
+        f"{'DB_PASSWORD'}@{'80.209.240.64'}:"
         f"{'5442'}/{'DB_NAME'}"
     )
 
@@ -49,7 +49,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
+    allow_origins=["*"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
