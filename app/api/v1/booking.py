@@ -13,7 +13,7 @@ from services.wrappers import admin_only, admin_or_current_user_only
 router = APIRouter()
 
 
-@router.get("/possible_create",
+@router.post("/possible_create",
             response_model=PossibleCreateBookingResponse)
 @admin_or_current_user_only
 async def possible_create_booking(
@@ -77,6 +77,8 @@ async def create_booking_row(
         user: object = None
 ):
     data = await request.json()
+    print('data')
+    print(data)
     try:
         request_model = CreateBookingRequest(**data)
     except Exception as e:
@@ -97,7 +99,7 @@ async def create_booking_row(
     }
 
 
-@router.get("/possible_changes", response_model=PossibleChangesResponse)
+@router.post("/possible_changes", response_model=PossibleChangesResponse)
 @admin_or_current_user_only
 async def get_possible_changes(
         request: Request,

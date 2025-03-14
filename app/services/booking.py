@@ -171,17 +171,16 @@ class UserBookingService:
                     operator_val = f"concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) = '{data['executor']}'"
                     operator_info = await db.execute(text(
                         f"SELECT id FROM \"executor\" WHERE concat(first_name,' ',last_name,' ',patronymic) = '{data['executor']}' ;"))
+
                     operator_id = "'" + str(operator_info.scalars().all()[0]) + "'"
 
             else:
                 operator_val = '1 = 1'
                 operator_id = 'NULL'
-
         except Exception as e:
             raise HTTPException(status_code=400,
                             detail=f"Неверный формат исполнителя: {e}")
 
-        print('date' in data)
         responsible_person = await db.execute(text(
             f"SELECT id FROM \"project\" WHERE project_nick = '{username}' ;"))
         items = responsible_person.scalars().all()
@@ -489,14 +488,10 @@ class UserBookingService:
         if user.is_superuser:
             raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
         request_dict_prev = request_data.dict(exclude_unset=True)
-        print('request_dict_prev')
-        print(request_dict_prev)
         request_dict = await UserBookingService.get_period(
             db,user,
             request_dict_prev)
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
-        print('date_booking_dict')
-        print(set(request_dict.keys()))
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
         if not cookie_createkey and set(request_dict.keys()) == {"start","end"}:
             # Если токен отсутствует, создаем новый
@@ -586,6 +581,7 @@ class UserBookingService:
                 """)
         result = await db.execute(check_query)
         row = result.fetchone()
+        print()
         if row[0]:
             raise HTTPException(status_code=404,
                                 detail="Проверка не пройдена")
@@ -605,10 +601,12 @@ class UserBookingService:
             raise HTTPException(status_code=403, detail="Запись запрещена")
 
         await UserBookingService.validate_token(db, cookie_createkey)
-
+        print(request_dict)
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                     request_dict)
 
+        print('uuids_json')
+        print(uuids_json)
         await UserBookingService.checking_blocking_period_with_creating(db, uuids_json,
                                            cookie_createkey)
 
