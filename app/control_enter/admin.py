@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from datetime import datetime, timedelta
 from .models import WorkingDayOfWeek, IsOpenRegistration, OpenWindowForOrdering, WorkerWeekStatus
 from user_auth.custom_admin import custom_admin_site
 
@@ -30,7 +31,15 @@ class IsOpenRegistrationAdmin(admin.ModelAdmin):
 
 @admin.register(OpenWindowForOrdering,site=custom_admin_site)
 class OpenWindowForOrderingAdmin(admin.ModelAdmin):
-    pass
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "start_date":
+            start_date_choices = [
+                ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
+                 (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
+                for i in range(0, 21)
+            ]
+            kwargs['choices'] = start_date_choices
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(WorkerWeekStatus,site=custom_admin_site)
 class WorkerWeekStatusAdmin(admin.ModelAdmin):

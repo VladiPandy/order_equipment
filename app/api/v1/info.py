@@ -81,7 +81,7 @@ async def possible_create_booking(
     return calback
 
 
-@router.get("/bookings",
+@router.post("/bookings",
     response_model = List[InfoBookingItem],
     tags = ['Информация'],
     summary = 'Получение таблицы броней',
@@ -110,7 +110,7 @@ async def get_project_bookings(
     return await UserInfoService.info_bookings(req_model, user, db)
 
 
-@router.get("/booking_lists",
+@router.post("/booking_lists",
     response_model=InfoListsResponse,
     tags=['Информация'],
     summary='Списки для фильтрации',
