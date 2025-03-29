@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-server-dev-15 \
     make \
     gcc \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка pg_cron
