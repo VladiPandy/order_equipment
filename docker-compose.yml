@@ -1,9 +1,8 @@
-
 services:
   db:
     build:
-      ./db
-    command: ["postgres", "-p", "5442"]
+      context: ./db
+    command: ["postgres", "-p", "5442", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=DB_NAME"]
     restart: always
     environment:
       POSTGRES_PASSWORD: 'DB_PASSWORD'

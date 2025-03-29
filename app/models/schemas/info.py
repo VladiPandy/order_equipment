@@ -29,3 +29,24 @@ class InfoBookingItem(BaseModel):
     samples: int
     status: str
     comment: Optional[str] = ""
+
+
+class InfoExecutorTable(BaseModel):
+    executor: int
+    monday: str
+    tuesday: str  # Формат: "dd.mm.yyyy"
+    wednesday: str
+    thursday: str
+    friday: str
+    saturday: int
+    Sunday: str
+
+class InfoExecutorTable(BaseModel):
+    executor: int
+    monday: str
+    tuesday: str  # Формат: "dd.mm.yyyy"
+    wednesday: str
+    thursday: str
+    friday: str
+    saturday: int
+    Sunday: str

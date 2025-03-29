@@ -1,5 +1,6 @@
 from fastapi import APIRouter,Body, Request, Response, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+import logging
 from models.schemas.booking import PossibleCreateBookingRequest, \
     PossibleCreateBookingResponse, CreateBookingResponse, \
     CreateBookingRequest, PossibleChangesResponse, PossibleChangesRequest, \
@@ -10,6 +11,8 @@ from db.postgres import get_db
 
 from services.wrappers import admin_only, admin_or_current_user_only
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -19,15 +22,7 @@ router = APIRouter()
 async def possible_create_booking(
         request: Request,
         response: Response,
-        # req_model: PossibleCreateBookingRequest = Body(
-        #         ...,
-        #         example={
-        #             "date": 'None',
-        #             "analyse": 'None',
-        #             "equipment": 'None',
-        #             "executor": 'None'
-        #         }
-        #     ),
+        req_model: PossibleCreateBookingRequest ,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
@@ -63,16 +58,7 @@ async def possible_create_booking(
 async def create_booking_row(
         request: Request,
         response: Response,
-        req_model: CreateBookingRequest = Body(
-                        ...,
-                        example={
-                            "date": "21.01.2024",
-                            "analyse": "Анализ 2",
-                            "equipment": "Приборчик",
-                            "executor": "Владилен Полосухин Дмитриевич",
-                            "samples" : 19
-                        }
-                    ),
+        req_model: CreateBookingRequest ,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
@@ -103,12 +89,7 @@ async def create_booking_row(
 @admin_or_current_user_only
 async def get_possible_changes(
         request: Request,
-        # req_model: PossibleChangesRequest = Body(
-        #                 ...,
-        #                 example={
-        #                     "id": 2
-        #                 }
-        #             ),
+        req_model: PossibleChangesRequest,
         user: object = None,
         db: AsyncSession = Depends(get_db)
 ):
@@ -116,11 +97,18 @@ async def get_possible_changes(
         data = await request.json()
         req_model = PossibleChangesRequest(**data)
     except Exception as e:
+        logger.error(f"Ошибка валидации входных данных: {str(e)}")
         raise HTTPException(status_code=400,
                             detail=f"Неверные входные данные: {e}")
 
-    print(req_model)
-    return await UserBookingService.get_possible_changes(req_model,user, db)
+    try:
+        # Получаем данные о бронировании
+        result = await UserBookingService.get_possible_changes(req_model, user, db)
+        
+        return result
+    except Exception as e:
+        logger.error(f"Ошибка при получении возможных изменений: {str(e)}")
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
 
 
 
@@ -128,20 +116,7 @@ async def get_possible_changes(
 @admin_or_current_user_only
 async def change_booking(
         request: Request,
-        req_model: ChangeRequest = Body(
-                        ...,
-                        example={
-                            "id": 1,
-                            "project": "Проект_1",
-                            "date": "26.08.2024",
-                            "analyse": "Анализ 2",
-                            "equipment": "Приборчик",
-                            "executor": "Владилен Полосухин Дмитриевич",
-                            "samples": 1,
-                            "status": "На рассмотрении",
-                            "comment": "Комментарий изменения"
-                        }
-                    ),
+        req_model: ChangeRequest,
         user: object = None,
         db: AsyncSession = Depends(get_db)
 ):
@@ -159,12 +134,7 @@ async def change_booking(
 @admin_or_current_user_only
 async def cancel_booking(
     request: Request,
-    req_model: CancelRequest = Body(
-                            ...,
-                            example={
-                                "id": 1
-                            }
-                        ),
+    req_model: CancelRequest,
     user: object = None,
     db: AsyncSession = Depends(get_db)
 ):
@@ -182,16 +152,7 @@ async def cancel_booking(
 @admin_or_current_user_only
 async def possible_create_booking(
         request: Request,
-        response: Response,
-        req_model: FeedbackRequest = Body(
-                ...,
-                example={
-                    "id": 2,
-                    "question_1": True,
-                    "question_2": False,
-                    "question_3": False
-                }
-            ),
+        req_model: FeedbackRequest,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):

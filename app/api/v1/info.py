@@ -11,7 +11,7 @@ from fastapi import HTTPException, Request
 from datetime import datetime
 
 from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
-    InfoListsResponse, InfoBookingItem
+    InfoListsResponse, InfoBookingItem, InfoExecutorTable
 
 
 router = APIRouter()
@@ -92,6 +92,7 @@ async def possible_create_booking(
 @admin_or_current_user_only
 async def get_project_bookings(
         request: Request,
+        req_model: InfoListsRequest ,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ) -> InfoListsRequest:
@@ -121,6 +122,7 @@ async def get_project_bookings(
 @admin_or_current_user_only
 async def get_project_bookings(
         request: Request,
+        req_model: InfoListsRequest ,
         db: AsyncSession = Depends(get_db),
         user: object = None
 ):
@@ -137,3 +139,33 @@ async def get_project_bookings(
                             detail=f"Неверные входные данные: {e}")
 
     return await UserInfoService.info_booking_lists(req_model, user, db)
+
+
+# @router.post("/table_executors",
+#     response_model = List[InfoExecutorTable],
+#     tags = ['Информация'],
+#     summary = 'Получение таблицы исполнителей',
+#     description = 'Получение всей информации о времени бронирования исполнителями',
+#     response_description = 'Список записей занятости исполнителей',
+#     status_code = status.HTTP_200_OK
+# )
+# @admin_or_current_user_only
+# async def get_project_bookings(
+#         request: Request,
+#         req_model: InfoListsRequest ,
+#         db: AsyncSession = Depends(get_db),
+#         user: object = None
+# ) -> InfoListsRequest:
+#     try:
+#         body_bytes = await request.body()
+#         if not body_bytes:
+#             data = {}
+#         else:
+#             data = await request.json()
+#         data_check = data if data else {}
+#         req_model = InfoListsRequest(**data_check)
+#     except Exception as e:
+#         raise HTTPException(status_code=400,
+#                             detail=f"Неверные входные данные: {e}")
+#
+#     return await UserInfoService.info_equipments(req_model, user, db)

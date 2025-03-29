@@ -66,6 +66,10 @@ class PossibleChangesRequest(BaseModel):
     )
 
 
+class Point(BaseModel):
+    lat: float
+    lon: float
+
 class ChoseData(BaseModel):
     project: str
     date: str
@@ -75,6 +79,9 @@ class ChoseData(BaseModel):
     samples: int
     status: str
     comment: str
+    point: Optional[Point] = None
+    city: Optional[str] = None
+
 class ChangeData(BaseModel):
     date: Dict[str, Any]
     analyse: Dict[str, Any]

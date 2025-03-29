@@ -120,8 +120,6 @@ class IsOpenRegistration(models.Model):
 
     week_period = models.CharField(
         max_length=50,
-        choices=get_week_period_choices(),
-        # функция будет вызвана для формирования списка вариантов
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
 

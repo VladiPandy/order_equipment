@@ -27,7 +27,21 @@ class WorkingDayOfWeekAdmin(admin.ModelAdmin):
 
 @admin.register(IsOpenRegistration,site=custom_admin_site)
 class IsOpenRegistrationAdmin(admin.ModelAdmin):
-    pass
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "week_period":
+            # Получаем текущую дату
+            today = datetime.today()
+            # Находим понедельник текущей недели
+            monday = today - timedelta(days=today.weekday())
+            # Формируем список периодов на ближайшие 3 недели
+            week_period_choices = []
+            for i in range(3):
+                week_start = monday + timedelta(weeks=i)
+                week_end = week_start + timedelta(days=6)
+                period = f"{week_start.strftime('%d.%m.%Y')} - {week_end.strftime('%d.%m.%Y')}"
+                week_period_choices.append((period, period))
+            kwargs['choices'] = week_period_choices
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(OpenWindowForOrdering,site=custom_admin_site)
 class OpenWindowForOrderingAdmin(admin.ModelAdmin):
