@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y \
 # Установка pg_cron
 RUN git clone https://github.com/citusdata/pg_cron.git \
     && cd pg_cron \
+    && export PATH=/usr/pgsql-16/bin:$PATH \
     && make \
-    && make install
+    && sudo PATH=$PATH make install
 
 # Добавляем pg_cron в shared_preload_libraries
 RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample \
