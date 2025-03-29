@@ -6,25 +6,22 @@ from datetime import datetime, timedelta
 from basic_elements.models import *
 
 
-def get_week_period_choices() -> list[tuple[str, str]]:
+def get_week_period_choices():
     """
-    Функция возвращает список кортежей с выбором периода недели с понедельника по воскресенье
-    на 12 недель вперед. Каждый кортеж имеет вид (значение, отображаемое значение).
-
-    :return: Список кортежей с периодами недели в формате 'dd.mm.yyyy-dd.mm.yyyy'
+    Генерирует список периодов недели на ближайшие 3 недели
     """
+    choices = []
     today = datetime.today()
-    # Определяем понедельник текущей недели.
-    current_monday = today - timedelta(days=today.weekday())
-    choices = [
-        (
-            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
-            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
-            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
-            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
-        )
-        for i in range(12)
-    ]
+    # Находим понедельник текущей недели
+    monday = today - timedelta(days=today.weekday())
+    
+    # Генерируем периоды на ближайшие 3 недели
+    for i in range(3):
+        week_start = monday + timedelta(weeks=i)
+        week_end = week_start + timedelta(days=6)
+        period = f"{week_start.strftime('%d.%m.%Y')} - {week_end.strftime('%d.%m.%Y')}"
+        choices.append((period, period))
+    
     return choices
 
 class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
@@ -97,8 +94,7 @@ class OpenWindowForOrdering(models.Model):
 
     week_period = models.CharField(
         max_length=50,
-        choices=get_week_period_choices(),
-        # функция будет вызвана для формирования списка вариантов
+        choices=get_week_period_choices,
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
 
@@ -120,6 +116,7 @@ class IsOpenRegistration(models.Model):
 
     week_period = models.CharField(
         max_length=50,
+        choices=get_week_period_choices,
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
 
