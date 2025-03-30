@@ -27,28 +27,22 @@ class WorkingDayOfWeekAdmin(admin.ModelAdmin):
 
 @admin.register(IsOpenRegistration,site=custom_admin_site)
 class IsOpenRegistrationAdmin(admin.ModelAdmin):
-    pass
-    # def formfield_for_choice_field(self, db_field, request, **kwargs):
-    #     if db_field.name == "week_period":
-    #         # Получаем текущую дату
-    #         today = datetime.today()
-    #         # Определяем понедельник текущей недели.
-    #         current_monday = today - timedelta(days=today.weekday())
-    #         choices = [
-    #             (
-    #                 (current_monday + timedelta(days=i * 7)).strftime(
-    #                     '%d.%m.%Y') + '-' +
-    #                 (current_monday + timedelta(days=i * 7 + 6)).strftime(
-    #                     '%d.%m.%Y'),
-    #                 (current_monday + timedelta(days=i * 7)).strftime(
-    #                     '%d.%m.%Y') + '-' +
-    #                 (current_monday + timedelta(days=i * 7 + 6)).strftime(
-    #                     '%d.%m.%Y')
-    #             )
-    #             for i in range(12)
-    #         ]
-    #         kwargs['choices'] = choices
-    #     return super().formfield_for_choice_field(db_field, request, **kwargs)
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "week_period":
+            today = datetime.today()
+            # Определяем понедельник текущей недели.
+            current_monday = today - timedelta(days=today.weekday())
+            choices = [
+                (
+                    (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+                    (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
+                    (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+                    (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
+                )
+                for i in range(12)
+            ]
+            kwargs['choices'] = choices
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(OpenWindowForOrdering,site=custom_admin_site)
 class OpenWindowForOrderingAdmin(admin.ModelAdmin):
@@ -60,6 +54,20 @@ class OpenWindowForOrderingAdmin(admin.ModelAdmin):
                 for i in range(0, 21)
             ]
             kwargs['choices'] = start_date_choices
+        if db_field.name == "week_period":
+            today = datetime.today()
+            # Определяем понедельник текущей недели.
+            current_monday = today - timedelta(days=today.weekday())
+            choices = [
+                (
+                    (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+                    (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
+                    (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+                    (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
+                )
+                for i in range(12)
+            ]
+            kwargs['choices'] = choices
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(WorkerWeekStatus,site=custom_admin_site)
