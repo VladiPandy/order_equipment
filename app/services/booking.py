@@ -429,17 +429,18 @@ class UserBookingService:
                         and {uuids_json['operator_val']}
                        """)
         availible_values = await db.execute(new_values_query)
-        print(availible_values)
         list_availible_values = availible_values.fetchall()
         block_date = f"""
-                    select *
-                    from date_booking
+                    select date_booking
+                    from block_booking
                     where write_timestamp+'10 minutes'::interval > now()  
                            {blocking_element} and project_id != '{uuids_json['user_id']}'
                             and id_delete = False
                     """
-        block_dates = await db.execute(block_date)
+        block_dates = await db.execute(text(block_date))
         list_block_values = block_dates.fetchall()
+        print('list_block_values')
+        print(list_block_values)
         return list_availible_values, list_block_values
 
     @staticmethod
@@ -525,7 +526,7 @@ class UserBookingService:
             raise HTTPException(status_code=403, detail="Заполнение запрещено")
 
         await UserBookingService.update_blocking_period(db, uuids_json, cookie_createkey)
-
+        print('heer')
         list_availible_values, list_block_values = await UserBookingService.availible_values(db,
                                             uuids_json,
                                             date_booking_dict,
@@ -544,8 +545,25 @@ class UserBookingService:
         samples_used = []
         for val in list_availible_values:
             const_date = val[0].strftime('%d.%m.%Y')
-            for bl in list_block_values:
-                bl_date = bl[0].strftime('%d.%m.%Y')
+            if len(list_block_values) > 0:
+                for bl in list_block_values:
+                    bl_date = bl[0].strftime('%d.%m.%Y')
+                    for elem in date_booking_dict['dates_list']:
+                        if elem in date_json and  elem == const_date:
+                            date_json[elem] = 1
+                        elif elem in date_json :
+                            date_json[elem] = date_json[elem]
+                        else:
+                            date_json[elem] = (1 if elem == const_date else 0)
+                    analyze_json[val[12]] = str(val[3])
+                    equipment_json[val[13]] = str(val[4])
+                    executor_json[val[14]] = str(val[6])
+                    for elem in date_booking_dict['dates_list']:
+                        if bl_date == elem and date_json[elem] == 1:
+                            date_json[elem] += 1
+                    samples_list.append(val[7])
+                    samples_used.append(val[9])
+            else:
                 for elem in date_booking_dict['dates_list']:
                     if elem in date_json and  elem == const_date:
                         date_json[elem] = 1
@@ -556,9 +574,6 @@ class UserBookingService:
                 analyze_json[val[12]] = str(val[3])
                 equipment_json[val[13]] = str(val[4])
                 executor_json[val[14]] = str(val[6])
-                for elem in date_booking_dict['dates_list']:
-                    if bl_date == elem and date_json[elem] == 1:
-                        date_json[elem] += 1
                 samples_list.append(val[7])
                 samples_used.append(val[9])
 
