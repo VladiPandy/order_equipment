@@ -35,7 +35,6 @@ async def possible_create_booking(
             UNION ALL
             SELECT admin_person responsible_person ,admin_nick project_name, False is_priority FROM \"adminstrator\" WHERE admin_nick = '{user.username}' LIMIT 1;"""))
     items = responsible_person.fetchall()
-    print(items[0][2])
     if user.is_superuser:
         if not items:
             calback = {
