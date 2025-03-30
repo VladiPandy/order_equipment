@@ -434,8 +434,7 @@ class UserBookingService:
                     select date_booking
                     from block_booking
                     where write_timestamp+'10 minutes'::interval > now()  
-                           {blocking_element} and 
-                           project_id != '{uuids_json['user_id']}'
+                           {blocking_element} and project_id != '{uuids_json['user_id']}'
                             and id_delete = False
                     """
         block_dates = await db.execute(text(block_date))
