@@ -349,14 +349,14 @@ class UserBookingService:
                                     select executor_id  ,sum(count_analyses) used_limit, count(count_analyses) count_executor_per_day
                                     from projects_booking
                                     where date_booking between '{date_booking_dict['date_start']}'::date 
-                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
                                     group by date_booking, executor_id 
                                 )
                                 ,equipment_limit as (
                                     select equipment_id   ,sum(count_analyses) used_limit, count(count_analyses) count_equipment_per_day
                                     from projects_booking
                                     where date_booking between '{date_booking_dict['date_start']}'::date 
-                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
                                     group by date_booking, equipment_id 
                                 )
                                 ,used_limits_analese_equipment as (
@@ -364,7 +364,7 @@ class UserBookingService:
                                     from projects_booking
                                     where {blocking_element} project_id = '{uuids_json['user_id']}' and
                                          date_booking between '{date_booking_dict['date_start']}'::date 
-                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False or status != 'Отклонено')
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
                                     group by analyse_id ,equipment_id 
                                 )
                                 ,blocking_list as
@@ -434,13 +434,12 @@ class UserBookingService:
                     select date_booking
                     from block_booking
                     where write_timestamp+'10 minutes'::interval > now()  
-                           {blocking_element} and project_id != '{uuids_json['user_id']}'
+                           {blocking_element} and 
+                           project_id != '{uuids_json['user_id']}'
                             and id_delete = False
                     """
         block_dates = await db.execute(text(block_date))
         list_block_values = block_dates.fetchall()
-        print('list_block_values')
-        print(list_block_values)
         return list_availible_values, list_block_values
 
     @staticmethod
@@ -502,15 +501,20 @@ class UserBookingService:
             request_dict_prev)
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
-        if not cookie_createkey and set(request_dict.keys()) == {"start","end"}:
+
+        if not cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Если токен отсутствует, создаем новый
+            print(' Если токен отсутствует, создаем новый')
+            print(uuids_json['user_id'])
+
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
 
             response.set_cookie(key="createkey", value=cookie_createkey)
 
-        elif cookie_createkey and set(request_dict.keys()) == {"start","end"}:
+        elif cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Блокируем старый токен
+            print('Блокируем старый токен')
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
             # Если токен отсутствует, создаем новый
@@ -543,10 +547,12 @@ class UserBookingService:
         executor_json = {}
         samples_list = []
         samples_used = []
+        print('list_block_values')
+        print(list_block_values)
         for val in list_availible_values:
             const_date = val[0].strftime('%d.%m.%Y')
             if len(list_block_values) > 0:
-                for bl in list_block_values:
+                for bl in list(set(list_block_values)):
                     bl_date = bl[0].strftime('%d.%m.%Y')
                     for elem in date_booking_dict['dates_list']:
                         if elem in date_json and  elem == const_date:
@@ -760,11 +766,12 @@ class UserBookingService:
                                                         request_dict)
         print(date_booking_dict)
         print('uuids_json')
-        list_availible_values,list_block_values = await UserBookingService.availible_values(db,
-                                                                          uuids_json,
-                                                                          date_booking_dict,
-                                                                          '-----'
-                                                                          )
+        list_availible_values,list_block_values \
+            = await UserBookingService.availible_values(db,
+                  uuids_json,
+                  date_booking_dict,
+                  '-----'
+                  )
         print(list_availible_values)
         if not list_availible_values:
             raise HTTPException(status_code=404,
@@ -1008,13 +1015,13 @@ class UserBookingService:
 
         block_query = '-----' if user.is_staff else ''
         query = text(f"""
-                           SELECT x.project_id, x.date_booking, x.analyse_id, x.equipment_id, x.executor_id, x.count_analyses, x.status, x.comment
-                           FROM projects_booking x
-                           join project p on p.id = x.project_id
-                           WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
-                           {block_query} and p.project_nick = '{user.username}'
-                           LIMIT 1
-                       """)
+               SELECT x.project_id, x.date_booking, x.analyse_id, x.equipment_id, x.executor_id, x.count_analyses, x.status, x.comment
+               FROM projects_booking x
+               join project p on p.id = x.project_id
+               WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
+               {block_query} and p.project_nick = '{user.username}'
+               LIMIT 1
+            """)
 
         result = await db.execute(query)
         row = result.fetchone()

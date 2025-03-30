@@ -32,21 +32,21 @@ class InfoBookingItem(BaseModel):
 
 
 class InfoExecutorTable(BaseModel):
-    executor: int
-    monday: str
-    tuesday: str  # Формат: "dd.mm.yyyy"
-    wednesday: str
-    thursday: str
-    friday: str
-    saturday: int
-    Sunday: str
+    executor: str
+    monday: Optional[str] = ""
+    tuesday: Optional[str] = ""
+    wednesday: Optional[str] = ""
+    thursday: Optional[str] = ""
+    friday: Optional[str] = ""
+    saturday: Optional[str] = ""
+    sunday: Optional[str] = ""
 
-class InfoExecutorTable(BaseModel):
-    executor: int
+class InfoEquipmentTable(BaseModel):
+    equipment: str
     monday: str
     tuesday: str  # Формат: "dd.mm.yyyy"
     wednesday: str
     thursday: str
     friday: str
-    saturday: int
-    Sunday: str
+    saturday: str
+    sunday: str
