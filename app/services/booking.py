@@ -960,7 +960,6 @@ class UserBookingService:
                                FROM projects_booking x
                                join project p on p.id = x.project_id
                                WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
-                               -----and :date_end
                                {block_query} and p.project_nick = '{user.username}'
                                LIMIT 1
                            """)
@@ -1013,7 +1012,6 @@ class UserBookingService:
                            FROM projects_booking x
                            join project p on p.id = x.project_id
                            WHERE x.id = '{request_dict['id']}' and x.is_delete = False 
-                           -----and :date_end
                            {block_query} and p.project_nick = '{user.username}'
                            LIMIT 1
                        """)
