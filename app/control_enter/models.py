@@ -8,21 +8,25 @@ from basic_elements.models import *
 
 def get_week_period_choices():
     """
-    Генерирует список периодов недели на ближайшие 3 недели
+    Функция возвращает список кортежей с выбором периода недели с понедельника по воскресенье
+    на 12 недель вперед. Каждый кортеж имеет вид (значение, отображаемое значение).
+
+    :return: Список кортежей с периодами недели в формате 'dd.mm.yyyy-dd.mm.yyyy'
     """
-    choices = []
     today = datetime.today()
-    # Находим понедельник текущей недели
-    monday = today - timedelta(days=today.weekday())
-    
-    # Генерируем периоды на ближайшие 3 недели
-    for i in range(3):
-        week_start = monday + timedelta(weeks=i)
-        week_end = week_start + timedelta(days=6)
-        period = f"{week_start.strftime('%d.%m.%Y')} - {week_end.strftime('%d.%m.%Y')}"
-        choices.append((period, period))
-    
+    # Определяем понедельник текущей недели.
+    current_monday = today - timedelta(days=today.weekday())
+    choices = [
+        (
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
+        )
+        for i in range(12)
+    ]
     return choices
+
 
 class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     """
@@ -39,7 +43,6 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий день недели'
         verbose_name_plural = 'Рабочие дни недели'
-
 
     def clean(self):
         if WorkingDayOfWeek.objects.exclude(pk=self.pk).exists():
@@ -73,28 +76,28 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
 
     formatted_working_days.short_description = 'Рабочие дни'
 
-class OpenWindowForOrdering(models.Model):
+
+class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     """
     Модель для представления окна открытого заказа
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     START_DATE_CHOICES = [
         ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
          (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
         for i in range(0, 21)
     ]
-    start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES, verbose_name='Дата открытия записи')  # Выпадающий список с датами
+    start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES, verbose_name='Дата открытия записи')
     TIME_CHOICES = [
         (f"{hour:02d}:00", f"{hour:02d}:00") for hour in range(0, 25)
     ]
     start_time = models.CharField(max_length=50, choices=TIME_CHOICES,
-                                  verbose_name='Время открытия бонирования')  # Выпадающий список с временем
+                                verbose_name='Время открытия бонирования')
     end_time = models.CharField(max_length=50, choices=TIME_CHOICES, verbose_name='Время закрытия бронирования')
     for_priority = models.BooleanField(default=False, verbose_name='Для приоритетных')
 
     week_period = models.CharField(
         max_length=50,
-        choices=get_week_period_choices,
+        choices=get_week_period_choices(),
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
 
@@ -107,20 +110,18 @@ class OpenWindowForOrdering(models.Model):
             f"Окно бронирования на {self.start_date} с {self.start_time} до {self.end_time}, "
             f"период недели: {self.week_period}")
 
-class IsOpenRegistration(models.Model):
+
+class IsOpenRegistration(UUIDMixin, TimeStampedMixin):
     """
     Модель для представления статуса открытой регистрации
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     is_open = models.BooleanField(default=False, verbose_name='Открыть регистрацию')
 
     week_period = models.CharField(
         max_length=50,
-        choices=get_week_period_choices,
+        choices=get_week_period_choices(),
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
-
-    create_timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Время создания')
 
     def clean(self) -> None:
         """
