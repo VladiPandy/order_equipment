@@ -1,6 +1,6 @@
 .MainPageTable {
-    font-size: 20px;
-    margin-top: 40px;
+    font-size: 1.3vw;
+    margin-top: 2.6vw;
     .table-header {
         display: flex;
         flex-direction: row;
@@ -20,9 +20,9 @@
         align-items: center;
         background-color: white;
         border-radius: var(--border-radius);
-        padding: 16px 0;
+        padding: 0.9vw 0;
         & + .table-line {
-            margin-top: 16px;
+            margin-top: 0.9vw;
         }
     }
 }

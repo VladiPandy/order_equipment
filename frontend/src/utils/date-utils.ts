@@ -1,3 +1,5 @@
+import { parse, format } from 'date-fns'
+
 export function formatDateToDDMMYYYY(date: Date, separator = '.') {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -5,6 +7,7 @@ export function formatDateToDDMMYYYY(date: Date, separator = '.') {
     
     return `${day}${separator}${month}${separator}${year}`;
 }
+
 export function getNextWeekday(targetDay: number) {
     const result = new Date();
     const currentDay = result.getDay();
@@ -47,4 +50,20 @@ export function getDaysOfWeek(weekNumber: number, year: number) {
     }
 
     return days;
+}
+
+export function convertYearMonthDayToDayMonthYear(date: string, separator = '.') {
+    const day = date.split('-');
+    
+    return `${day[2]}${separator}${day[1]}${separator}${day[0]}`;
+}
+
+export const convertDDMMYYYYToISO = (dateStr: string): string => {
+    const date = parse(dateStr, 'dd.MM.yyyy', new Date())
+    return format(date, 'yyyy-MM-dd')
+}
+
+export const convertISOToDDMMYYYY = (dateStr: string): string => {
+    const date = parse(dateStr, 'yyyy-MM-dd', new Date())
+    return format(date, 'dd.MM.yyyy')
 }

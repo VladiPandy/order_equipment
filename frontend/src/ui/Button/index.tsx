@@ -16,7 +16,7 @@ const Button = <T extends (...args: never[]) => void>({
     isActive = true,
     className
   }: ButtonProps<T>) => {
-    return <button className={`button ${type} ${!isActive ? 'disabled' : ''} ${className}`} onClick={onClick}>
+    return <button className={`button ${type} ${!isActive ? 'disabled' : ''} ${className}`} onClick={isActive ? onClick : undefined}>
        {children}
     </button>
 }

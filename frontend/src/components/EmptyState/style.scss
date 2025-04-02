@@ -1,0 +1,28 @@
+.empty-state {
+    width: 100%;
+    padding: 2.6vw 0;
+    background: rgba(17, 81, 115, 0.05);
+    border-radius: 8px;
+    margin: 1.3vw 0;
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.9vw;
+    }
+
+    &__icon {
+        width: 48px;
+        height: 48px;
+        color: var(--primary-color);
+    }
+
+    &__message {
+        font-size: 0.9vw;
+        color: var(--primary-color);
+        margin: 0;
+        text-align: center;
+    }
+} 

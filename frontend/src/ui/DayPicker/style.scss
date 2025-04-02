@@ -19,7 +19,7 @@
         display: flex;
         gap: 10px;
         background-color: rgba(241, 241, 241, 1);
-        padding: 5px 20px;
+        padding: 5px 1.3vw;
         border-radius: 5px;
         
         button {
@@ -27,11 +27,16 @@
             background-color: white;
             border-radius: var(--border-radius);
             border: none;
-            font-size: 16px;
+            font-size: 0.9vw;
             padding: 5px 12px;
             flex: 1;
             &.active {
                 background-color: var(--color-green);
+            }
+            &.disabled {
+                background-color: var(--color-white);
+                color: var(--color-blue);
+                cursor: not-allowed;
             }
         }
     }

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS public.feedback_task (
 	question_1 bool NOT NULL DEFAULT True,
 	question_2 bool NOT NULL DEFAULT True,
     question_3 bool NOT NULL DEFAULT True,
-	CONSTRAINT block_booking_id PRIMARY KEY (booking_id)
+	CONSTRAINT feedback_booking_id PRIMARY KEY (booking_id)
 );
 
 -- Создаем функцию для обновления статуса
@@ -60,7 +60,7 @@ BEGIN
     -- Обновляем статус для всех записей, где статус 'Согласовано'
     UPDATE public.projects_booking
     SET status = 'Оценить'
-    WHERE status = 'Согласовано'
+    WHERE status = 'Выполнено'
     AND is_delete = false
     RETURNING COUNT(*) INTO updated_count;
     

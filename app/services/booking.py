@@ -1024,36 +1024,37 @@ class UserBookingService:
 
         result = await db.execute(query)
         row = result.fetchone()
-
-        result = await db.execute(query)
-        row = result.fetchone()
+        print(user.is_staff)
+        print('request_dict')
+        print(request_dict)
         if not row:
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         if user.is_staff :
             raise HTTPException(status_code=403, detail="Только пользователь может прислать ответы")
 
-        if row['status'] != 'Оценить':
+        if row[6] != 'Оценить':
             raise HTTPException(status_code=403, detail="Задача не в статусе \"Оценить\"")
 
         else:
             update_query = text(f"""
                            UPDATE public.projects_booking
-                           SET status = 'Завершено'
+                           SET status = 'Выполнено'
                            WHERE id = {request_dict['id']}
                            RETURNING id;
                        """)
             insert_query = text(f"""
                             INSERT INTO public.feedback_task
                             (booking_id, question_1, question_2, question_3)
-                            VALUES ({request_dict['id']}, '{request_dict['question_1']}',{request_dict['question_2']}, {request_dict['question_3']})
-                            RETURNING id
+                            VALUES ({request_dict['id']}, {request_dict['question_1']},{request_dict['question_2']}, {request_dict['question_3']})
+                            RETURNING booking_id
                         """)
             try:
                 delete_result = await db.execute(update_query)
                 deleted_id = delete_result.fetchone()[0]
                 insert_result = await db.execute(insert_query)
-                insert_id = insert_result.fetchone()[0]
+                insert_id = insert_result.fetchone()
+                print(insert_id)
                 if not deleted_id:
                     raise HTTPException(status_code=404,
                                         detail="Запись не найдена или не обновлена")

@@ -1,10 +1,10 @@
 .status-chip {
     padding: 3px 10px 5px;
-    font-size: 16px;
+    font-size: 0.9vw;
     border-radius: 100px;
     color: white;
 
-    &.done {
+    &.done, &.checked {
         background-color: var(--color-light-blue);
     }
     &.pending {

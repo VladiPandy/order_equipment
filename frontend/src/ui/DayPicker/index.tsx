@@ -1,36 +1,53 @@
 import {FC} from 'react'
 import {DaysType} from '../../types'
 import './style.scss'
+
 type DayPickerProps = {
-    currentDays: DaysType[] | undefined,
-    setCurrentDays: (args: DaysType[]) => void,
+    currentDay: string | undefined,
+    setCurrentDay: (args?: string) => void,
     isRequired: boolean,
-    title: string
+    title: string,
+    availableDates?: { [key: string]: boolean }
 }
 
 const days: DaysType[] = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
-const DayPicker: FC<DayPickerProps> = ({currentDays, setCurrentDays, isRequired, title}) => {
+const DayPicker: FC<DayPickerProps> = ({currentDay, setCurrentDay, isRequired, title, availableDates}) => {
 
-    const onClickDay = (e: React.MouseEvent, day: DaysType) => {
+
+
+    const onClickDay = (e: React.MouseEvent, day: string, isAvailable: boolean) => {
         e.preventDefault()
         e.stopPropagation()
-        if (!currentDays) return
-        if (currentDays.includes(day)) {
-            setCurrentDays([])
+        if (!isAvailable) return
+        if (currentDay === day) {
+            setCurrentDay()
         } else {
-            setCurrentDays([day])
+            setCurrentDay(day)
         }
     }
 
     const renderDays = () => {
-        return days.map((day, index) => <button key={index} onClick={(e) => onClickDay(e, day)} className={currentDays?.includes(day) ? 'active' : ''}>{day}</button>)
+        return Object.entries(availableDates || {}).map(([key, value], index) => 
+            <button 
+                key={key} 
+                onClick={(e) => onClickDay(e, key, value)} 
+                className={`${currentDay?.includes(key) ? 'active' : ''} ${!value ? 'disabled' : ''}`}
+            >
+                {days[index]}
+            </button>
+        )
     }
 
-    const rentetLable = () => <label className={isRequired ? 'required' : ''}>{title}</label>
+    const renderLabel = () => (
+        <label 
+            className={isRequired ? 'required' : ''}>
+                {title} c {Object.keys(availableDates || {})[0]} по {Object.keys(availableDates || {})[6]}
+        </label>
+    )
 
     return (
         <div className="DayPicker">
-            {title ? rentetLable() : ''}
+            {title ? renderLabel() : ''}
             <div className="week"> 
                 {renderDays()}
             </div>

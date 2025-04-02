@@ -1,61 +1,111 @@
-import React, { FC } from 'react'
+import React, { FC, useContext, useEffect } from 'react'
 
 import Button from '../../ui/Button'
 import StatusChip from '../../ui/StatusChip'
-import Modal from '../../components/modal'
+import CreateModal from '../../components/modal/CreateModal'
 import Instruments from '../../ui/Instruments'
 
 import { DataType } from '../../types'
 import './style.scss'
+import { endPoints } from '../../api/endPoints'
+import { BookingsContext } from '../../features/bookingsProvider'
+import { globalPost } from '../../api/globalFetch'
+import { UserContext } from '../../features/user'
+import { Loader } from '../../ui/Loader'
+import { FiltersContext } from '../../features/filtersProvider'
+import EmptyState from '../../components/EmptyState'
+import { Bounce, toast } from 'react-toastify'
+import EditModal from '../../components/modal/EditModal'
+import { onSuccess } from '../../utils/toast'
 
 interface MainPageProps {
-    data: DataType[],
-    handleDataChange: (data: DataType[]) => void
+    // data: DataType[],
+    // handleDataChange: (data: DataType[]) => void
 }
 
 const headers = ['Проект', 'Дата бронирования', 'Анализ', 'Прибор', 'Исполнитель', 'Число образцов', 'Статус']
 
-const MainPage: FC<MainPageProps> = ({data, handleDataChange}) => {
+const MainPage: FC<MainPageProps> = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false)
-    const [editingId, setEditingId] = React.useState<number|null>()
+    const [editingItem, setEditingItem] = React.useState<number|null>()
 
-    const onSubmitData = (newEntry: DataType) => {
-        const newData = [...data, newEntry]
-        handleDataChange(newData);
-    }
+    const { user } = useContext(UserContext)
+    const {
+        data: bookings, 
+        loading: bookingsLoading, 
+        getBookings, 
+        deleteBooking, 
+        createBooking, 
+        editBooking
+    } = React.useContext(BookingsContext)
+    const {getFilters, filters, getFilterBody} = React.useContext(FiltersContext)
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            getFilters()
+            getBookings(getFilterBody())
+        }, 1000 * 60 * 10)
+        return () => clearInterval(timer)
+    }, [])
+
+    useEffect(() => {
+        getBookings(getFilterBody())
+    }, [filters])
     
-    const handleDelete = (id: number) => {
-        const newData = data.filter((_, index) => index !== id)
-        handleDataChange(newData);
-    }
-    const handleOpenEditModal = (id: number) => {
-        setIsEditModalOpen(true)
-        setEditingId(id)
-    }
-
-    const handleEdit = (newEntry: DataType) => {
-        if (editingId){
-            const newData = [...data]
-            newData[editingId] = newEntry
-            handleDataChange(newData);
+    const sendData = (body: any) => {
+        if (body.id >= 0) {
+            onSuccess(isCreateModalOpen ? 'Запись успешно добавлена' : 'Запись успешно изменена')
+            getBookings(getFilterBody())
+            setIsCreateModalOpen(false)
+            setIsEditModalOpen(false)
         }
     }
 
-    const renderData = (data: DataType[]) => {
-        return data.map((line, index) => {
-            const {name, date, item, analyze, executor, sample, status, comment} = line
+    const onSubmitData = (newEntry: DataType) => {
+        createBooking(newEntry, sendData)
+    }
+
+    const handleOpenEditModal = (editingItem) => {
+        setIsEditModalOpen(true)
+        setEditingItem(editingItem)
+    }
+
+    const handleEdit = (newEntry: DataType) => {
+        if (editingItem) {
+            editBooking(newEntry, sendData)
+        }
+    }
+
+    const handleDelete = (id: number) => {
+        deleteBooking(id, (response: any) => {
+            getBookings(getFilterBody())
+            onSuccess(response.message);
+        })
+    }
+
+    const renderData = (data) => {
+        return data.length === 0 ? <EmptyState /> : data.map((line, index) => {
+            const {project, date, equipment, analyse, executor, samples, status, comment, id} = line
             return (
                 <div className="table-line" key={index}>
-                    <div className="table-cell">{name}</div>
+                    <div className="table-cell">{project}</div>
                     <div className="table-cell">{date}</div>
-                    <div className="table-cell">{(analyze as string[]).join(', ')}</div>
-                    <div className="table-cell">{item}</div>
+                    <div className="table-cell">{analyse}</div>
+                    <div className="table-cell">{equipment}</div>
                     <div className="table-cell">{executor}</div>
-                    <div className="table-cell">{sample}</div>
-                    <div className="table-cell">{status && <StatusChip status={status as string}/>}</div>
+                    <div className="table-cell">{samples}</div>
+                    <div className="table-cell">{status && <StatusChip id={id} status={status as string}/>}</div>
                     <div className="table-cell">
-                        { status && <Instruments status={status as string} id={index} comment={comment as string} handleEdit={() => handleOpenEditModal(index)} handleDelete={handleDelete}/>}
+                        { status && 
+                            <Instruments 
+                                status={status as string} 
+                                id={id as number} 
+                                comment={comment as string} 
+                                handleEdit={() => handleOpenEditModal(line)} 
+                                handleDelete={() => handleDelete(id)}
+                            />
+                        }
                     </div>
                 </div>
             )
@@ -65,9 +115,9 @@ const MainPage: FC<MainPageProps> = ({data, handleDataChange}) => {
     return (
         <div className="MainPageTable">
             {isCreateModalOpen && 
-            <Modal onClose={()=>setIsCreateModalOpen(false)} onSubmit={onSubmitData}/> }
-            {isEditModalOpen && editingId && 
-            <Modal onClose={()=>setIsEditModalOpen(false)} onSubmit={handleEdit} editingEntry={data[editingId]} isEditing />}
+            <CreateModal onClose={()=>setIsCreateModalOpen(false)} onSubmit={onSubmitData}/> }
+            {(isEditModalOpen && editingItem) && 
+            <EditModal onClose={()=>setIsEditModalOpen(false)} onSubmit={handleEdit} editingEntry={editingItem} />}
             {/* {isCreateModalOpen && 
             <Modal onClose={()=>setIsCreateModalOpen(false)} onSubmit={onSubmitData}/> } */}
             <div className="table-header">
@@ -77,11 +127,11 @@ const MainPage: FC<MainPageProps> = ({data, handleDataChange}) => {
                     </div>
                 ))}
                 <div className="table-cell">
-                    <Button type='secondary' onClick={() => setIsCreateModalOpen(true)}>Добавить запись</Button>
+                    <Button type='secondary' isActive={user?.is_open} onClick={() => setIsCreateModalOpen(true)}>Добавить запись</Button>
                 </div>
             </div>
             <div className="table-body">
-                {renderData(data)}
+                {bookingsLoading ? <Loader/> : renderData(bookings)}
             </div>
         </div>
     )

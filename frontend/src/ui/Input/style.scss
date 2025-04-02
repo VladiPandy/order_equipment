@@ -25,13 +25,13 @@
     }
 
     &.withIcon {
-        .selec-element input {
+        .select-element input {
             padding-left: 42px;
             width: calc(100% - 58px);
         }
     }
 
-    .selec-element {
+    .select-element {
         position: relative;
         &.active {
             input {
@@ -62,7 +62,7 @@
 
 .dropdown {
     position: absolute;
-    width: calc(100% - 16px);
+    width: calc(100% - 0.9vw);
     top: 42px;
     z-index: 100;
     padding: 8px;

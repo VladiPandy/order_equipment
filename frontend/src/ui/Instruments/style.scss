@@ -18,8 +18,8 @@
 
     .indicator {
         position: relative;
-        width: 20px;
-        height: 20px;
+        width: 2rem;
+        height: 2rem;
         border-radius: 100%;
         background-color: var(--color-yellow);
         display: none;
@@ -35,7 +35,7 @@
             bottom: 50px;
             right: 10px;
             background: white;
-            padding: 20px 40px 20px 45px;
+            padding: 1.3vw 2.6vw 1.3vw 45px;
             border-radius: 30px;
             box-shadow: 0px 21px 30px 0px rgba(0, 0, 0, 0.1);
             text-align: start;

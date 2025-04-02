@@ -5,8 +5,9 @@ import Trash from '../../assets/trash.svg?react'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import Edit from '../../assets/edit.svg?react'
-import { FC } from 'react'
+import { FC, useContext } from 'react'
 import Button from '../Button'
+import { UserContext } from '../../features/user'
 
 interface CommentIndicatorProps {
     comment?: string
@@ -29,8 +30,8 @@ interface InstrumentsProps {
     status: string
 }
 const Instruments: FC<InstrumentsProps> = ({id, handleEdit, handleDelete, comment, status}) => {
-    const {isAdmin} = JSON.parse(localStorage.getItem('user') || '{}')
-    const isEditButtonShow = isAdmin && !['Выполнено','Оценить'].includes(status) || !isAdmin && status === 'На рассмотрении'
+    const { user } = useContext(UserContext)
+    const isEditButtonShow = user?.is_admin && !['Выполнено','Оценить'].includes(status)
 
     const handleEditClick = (id: number) => {
         return isEditButtonShow && handleEdit(id)
