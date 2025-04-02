@@ -48,13 +48,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5174"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:5174"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.include_router(info.router, prefix='/api/v1/info', tags=['Информация'])
 app.include_router(booking.router, prefix='/api/v1/booking', tags=['Бронирование'])

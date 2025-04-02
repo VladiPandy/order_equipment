@@ -10,7 +10,7 @@ const credentials3 = btoa('admin:adminpassword');
 export const baseURL = `${apiUrl}${apiVersion}`;
 
 export const headers = {
-    'Authorization': `Basic ${credentials2}`,
+    //'Authorization': `Basic ${credentials2}`,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'mode': 'cors',
