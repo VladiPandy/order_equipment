@@ -70,3 +70,26 @@ export type FilterBodyType = {
     status?: string,
     comment?: string
 }
+
+export type FilterBody = {
+    date?: {
+        start: string
+        end: string
+    }
+    period?: string
+    analyse?: string[]
+    equipment?: string[]
+    executor?: string[]
+    status?: string[]
+}
+
+export type Booking = {
+    id: number
+    date: string
+    analyse: string[]
+    equipment: string
+    executor: string
+    samples: number
+    status: string
+    comment?: string
+}

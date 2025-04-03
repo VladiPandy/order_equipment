@@ -93,7 +93,6 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
     const getFilters = () => {
         setLoading(true)
         globalPost(endPoints.filters, (data: Filters) => {
-            console.log(data)
             prepareFiltersOptions(data)
             setLoading(false)
         }, {
@@ -124,21 +123,19 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
                 ...filters,
                 date: dateRange
             })
-        } 
-        // else {
-        //     const attribute = atr as string[] | string
-        //     const isReset = !attribute || attribute === 'Не выбран';
-        //     setFilters(prev => ({
-        //         ...prev,
-        //         [type]: isReset ? [] : Array.isArray(attribute) ? attribute : [attribute as string],
-        //     }));
-        // }
+        } else {
+            const attribute = atr as string[] | string
+            const isReset = !attribute || attribute === 'Не выбран';
+            setFilters(prev => ({
+                ...prev,
+                [type]: isReset ? [] : Array.isArray(attribute) ? attribute : [attribute as string],
+            }));
+        }
     };
 
     const resetFilters = () => {
         setFilters({
             ...initialFilters,
-            date: getDefaultDateRange()
         })
     }
 

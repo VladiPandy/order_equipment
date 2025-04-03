@@ -28,6 +28,8 @@ const DropDown: React.FC<DropDownProps> = ({
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
+    useEffect(() => setSelected(value), [value])
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

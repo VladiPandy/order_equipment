@@ -1,23 +1,28 @@
-import { createContext, FC, useCallback, useState } from "react"
+import { createContext, FC, useCallback, useEffect, useState } from "react"
 // import { Filters } from "../types"
 import { globalDelete, globalPost } from "../api/globalFetch"
 import { endPoints } from "../api/endPoints"
 import { BookingType, FilterBodyType } from "../types"
+import { parse, isWithinInterval } from 'date-fns'
 
 type ContextType = {
-    data: BookingType[], 
+    bookings: BookingType[], 
     loading: boolean,
+    isFiltered: boolean,
     getBookings: (body: FilterBodyType) => void
     createBooking: (body: BookingType, callback: () => void) => void
     editBooking: (body: BookingType, callback: () => void) => void
+    filterBookings: (body: BookingType[]) => void,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deleteBooking: (id: number, callback: (response: any) => void) => void
     feedbackBooking: (feedback: any, callback: () => void) => void
 }
 
 const initialValue = {
-    data: [],
+    bookings: [],
     loading: false,
+    isFiltered: false,
+    filterBookings: () => {},
     getBookings: () => {},
     createBooking: () => {},
     editBooking: () => {},
@@ -33,7 +38,14 @@ interface PropsType {
 
 export const BookingsProvider: FC<PropsType> = ({children}) => {
     const [data, setData] = useState<BookingType[]>([])
+    const [filteredBooking, setFilteredBooking] = useState<BookingType[]>([])
     const [loading, setLoading] = useState<boolean>(false)
+    const [isFiltered, setIsFiltered] = useState<boolean>(false)
+
+    useEffect(() => {
+        setFilteredBooking(data)
+        setIsFiltered(true)
+    }, [data])
 
     const getBookings = useCallback((body: FilterBodyType) => {
         setLoading(true)
@@ -84,9 +96,31 @@ export const BookingsProvider: FC<PropsType> = ({children}) => {
         }, {id})
     }, [])
 
+    const filterBookings = (filters) => {
+        const filtered = data.filter((booking) => {
+            return Object.entries(booking).reduce((acc, [key, value]) => {
+                if (!acc) return false
+                
+                if (key === 'date') {
+                    const bookingDate = parse(value, 'dd.MM.yyyy', new Date())
+                    const startDate = parse(filters.date.start, 'dd.MM.yyyy', new Date())
+                    const endDate = parse(filters.date.end, 'dd.MM.yyyy', new Date())
+                    return isWithinInterval(bookingDate, { start: startDate, end: endDate })
+                }
+
+                if (!filters[key]?.length) return true
+                if (filters[key].includes(value)) return true
+                return false
+            }, true)
+        })
+        setFilteredBooking(filtered)
+    }
+
     const contextData = {
-        data,
+        bookings: filteredBooking,
         loading,
+        isFiltered,
+        filterBookings,
         getBookings,
         createBooking,
         editBooking,

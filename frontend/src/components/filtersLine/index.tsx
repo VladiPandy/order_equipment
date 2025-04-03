@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect } from 'react'
+import { FC, useContext } from 'react'
 import './style.scss'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -13,11 +13,7 @@ import { FiltersContext } from '../../features/filtersProvider'
 import { DateRange } from '../../types'
 
 const FiltersLine: FC = () => {
-    const { filters, filtersOptions, changeFilters, resetFilters, loading, getFilters } = useContext(FiltersContext)
-
-    useEffect(() => {
-        getFilters()
-    }, [])
+    const { filters, filtersOptions, changeFilters, resetFilters, loading } = useContext(FiltersContext)
 
     const handleReset = () => {
         resetFilters()

@@ -7,41 +7,36 @@ import Instruments from '../../ui/Instruments'
 
 import { DataType } from '../../types'
 import './style.scss'
-import { endPoints } from '../../api/endPoints'
 import { BookingsContext } from '../../features/bookingsProvider'
-import { globalPost } from '../../api/globalFetch'
 import { UserContext } from '../../features/user'
 import { Loader } from '../../ui/Loader'
 import { FiltersContext } from '../../features/filtersProvider'
 import EmptyState from '../../components/EmptyState'
-import { Bounce, toast } from 'react-toastify'
 import EditModal from '../../components/modal/EditModal'
 import { onSuccess } from '../../utils/toast'
 
-interface MainPageProps {
-    // data: DataType[],
-    // handleDataChange: (data: DataType[]) => void
-}
-
 const headers = ['Проект', 'Дата бронирования', 'Анализ', 'Прибор', 'Исполнитель', 'Число образцов', 'Статус']
 
-const MainPage: FC<MainPageProps> = () => {
+const MainPage: FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false)
     const [editingItem, setEditingItem] = React.useState<number|null>()
 
     const { user } = useContext(UserContext)
     const {
-        data: bookings, 
+        bookings, 
         loading: bookingsLoading, 
         getBookings, 
         deleteBooking, 
         createBooking, 
-        editBooking
+        editBooking,
+        filterBookings
     } = React.useContext(BookingsContext)
     const {getFilters, filters, getFilterBody} = React.useContext(FiltersContext)
 
     useEffect(() => {
+        getFilters()
+        getBookings(getFilterBody())
         const timer = setInterval(() => {
             getFilters()
             getBookings(getFilterBody())
@@ -50,7 +45,11 @@ const MainPage: FC<MainPageProps> = () => {
     }, [])
 
     useEffect(() => {
-        getBookings(getFilterBody())
+        if (bookingsLoading) {
+            getBookings(getFilterBody())
+        }
+
+        filterBookings(filters)
     }, [filters])
     
     const sendData = (body: any) => {
