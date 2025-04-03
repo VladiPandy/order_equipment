@@ -32,6 +32,12 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     """
     Модель для представления рабочих дней недели
     """
+    week_period = models.CharField(
+        max_length=50,
+        choices=get_week_period_choices(),
+        verbose_name='Период недели (с понедельника по воскресенье)'
+    )
+
     monday = models.BooleanField(default=False, verbose_name='Понедельник')
     tuesday = models.BooleanField(default=False, verbose_name='Вторник')
     wednesday = models.BooleanField(default=False, verbose_name='Среда')
@@ -44,10 +50,21 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
         verbose_name = 'Рабочий день недели'
         verbose_name_plural = 'Рабочие дни недели'
 
-    def clean(self):
-        if WorkingDayOfWeek.objects.exclude(pk=self.pk).exists():
-            raise ValidationError("Можно создать только одну запись рабочего дня недели. Пожалуйста, отредактируйте существующую запись.")
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
 
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+        print(WorkingDayOfWeek.objects.count())
+        if self.week_period:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if WorkingDayOfWeek.objects.exclude(pk=self.pk).filter(
+                    week_period=self.week_period).exists():
+                raise ValidationError(
+                    f"Период {self.week_period} уже существует. Должна быть только один период."
+                )
     def save(self, *args, **kwargs):
         self.full_clean()  # Вызов clean() перед сохранением
         super().save(*args, **kwargs)
@@ -68,7 +85,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
 
         return format_html(
             '<span style="font-size: 32px;line-height: 3;">{}</span>'.format(
-                '   '.join(
+                f'<span style="font-size: 26px;line-height: 3;">{self.week_period}  </span>'+'   '.join(
                     [f"<span style='color: green;'>{day}</span>" if is_working else f"<span style='color: gray;'>{day}</span>" for day, is_working in days]
                 )
             )
@@ -165,6 +182,12 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
         ('Болеет', 'Болеет'),
     ]
 
+    week_period = models.CharField(
+        max_length=50,
+        choices=get_week_period_choices(),
+        verbose_name='Период недели (с понедельника по воскресенье)'
+    )
+
     executor = models.ForeignKey(Executor, on_delete=models.CASCADE, verbose_name='Исполнитель', related_name='executor')
     monday = models.CharField(default='Работает', verbose_name='Понедельник', choices=STATUS_WORKING)
     tuesday = models.CharField(default='Работает', verbose_name='Вторник', choices=STATUS_WORKING)
@@ -178,5 +201,24 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
         verbose_name = 'Рабочий график сотрудника'
         verbose_name_plural = 'Рабочие графики сотрудников'
 
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+        if self.week_period:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if WorkerWeekStatus.objects.exclude(pk=self.pk).filter(
+                    executor=self.executor).filter(
+                    week_period=self.week_period).exists():
+                raise ValidationError(
+                    f"Период {self.week_period} уже существует для исполнителя {self.executor}. Должна быть только один период."
+                )
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return format_html(f"{self.executor} | {self.monday} | {self.tuesday} | {self.wednesday} | {self.thursday} | {self.friday} | {self.sunday} | {self.saturday} ")
+        return format_html(f"{self.week_period} - {self.executor} | {self.monday} | {self.tuesday} | {self.wednesday} | {self.thursday} | {self.friday} | {self.sunday} | {self.saturday} ")

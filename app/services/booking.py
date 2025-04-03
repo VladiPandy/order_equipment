@@ -48,7 +48,6 @@ class UserBookingService:
         :return: Словарь с date_start, date_end и dates_list (список дат в формате "dd.mm.yyyy").
         :raises HTTPException: При ошибке валидации.
         """
-        print('certian_date' in request)
         try:
             # Если переданы параметры start и end, пытаемся их разобрать.
             if 'start' in request and request['start']:
@@ -303,47 +302,79 @@ class UserBookingService:
                              with  days_employes as (
                                 SELECT 1 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.monday = 'Работает' 
-                                union all 
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                
+                                UNION ALL
                                 SELECT 2 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.tuesday = 'Работает' 
-                                union all 
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                
+                                UNION ALL
                                 SELECT 3 d, x.executor_id  FROM public.control_enter_workerweekstatus x
-                                where x.wednesday = 'Работает' 
-                                union all 
+                                where x.wednesday = 'Работает'
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date  
+                                UNION ALL
                                 SELECT 4 d, x.executor_id  FROM public.control_enter_workerweekstatus x
-                                where x.thursday = 'Работает' 
-                                union all 
+                                where x.thursday = 'Работает'
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date  
+                                UNION ALL
                                 SELECT 5 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.friday = 'Работает'
-                                union all 
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 6 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.saturday = 'Работает' 
-                                union all 
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 7 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.sunday = 'Работает' 
+                                    and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                
                                 )
                                 ,days_working as
                                 (
                                 SELECT 1 d FROM public.control_enter_workingdayofweek x
                                 where x.monday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 2 d FROM public.control_enter_workingdayofweek x
                                 where x.tuesday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 3 d FROM public.control_enter_workingdayofweek x
                                 where x.wednesday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 4 d FROM public.control_enter_workingdayofweek x
                                 where x.thursday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 5 d FROM public.control_enter_workingdayofweek x
                                 where x.friday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 6 d FROM public.control_enter_workingdayofweek x
                                 where x.saturday = true
-                                union all 
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                UNION ALL
                                 SELECT 7 d FROM public.control_enter_workingdayofweek x
                                 where x.sunday = true
+                                and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                    and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                        
                                 )
                                 ,executor_limit as (
                                     select executor_id  ,sum(count_analyses) used_limit, count(count_analyses) count_executor_per_day
@@ -500,6 +531,7 @@ class UserBookingService:
             request_dict_prev)
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
         uuids_json = await UserBookingService.get_uuids(db,user.username, request_dict)
+
 
         if not cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Если токен отсутствует, создаем новый

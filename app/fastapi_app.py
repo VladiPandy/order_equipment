@@ -20,7 +20,7 @@ AsyncSessionLocal = None
 async def lifespan(app: FastAPI):
     database_url = (
         f"postgresql+asyncpg://{'DB_USER'}:"
-        f"{'DB_PASSWORD'}@{'80.209.240.64'}:"
+        f"{'DB_PASSWORD'}@{'db'}:"
         f"{'5442'}/{'DB_NAME'}"
     )
 
@@ -48,13 +48,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5174"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:5174"],  # или список разрешённых доменов, например, ["http://localhost:3000"]
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.include_router(info.router, prefix='/api/v1/info', tags=['Информация'])
 app.include_router(booking.router, prefix='/api/v1/booking', tags=['Бронирование'])

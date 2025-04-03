@@ -158,6 +158,7 @@ class UserInfoService:
         result = await db.execute(query, params)
         rows = result.fetchall()
 
+        print(rows)
         if not rows:
             return []  # Возвращаем пустой список, если данных нет
 

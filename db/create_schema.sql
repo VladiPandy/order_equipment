@@ -69,7 +69,7 @@ BEGIN
     
     RETURN updated_count;
 END;
-$$;
+$$;  -- Закрытие долларовых кавычек
 
 -- Добавляем комментарий к функции
 COMMENT ON FUNCTION public.update_booking_status IS 'Обновляет статус бронирования с "Согласовано" на "Оценить" для записей текущего дня';
