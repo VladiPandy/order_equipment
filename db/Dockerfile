@@ -38,8 +38,6 @@ RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresq
     && touch /var/log/postgresql/cron.log \
     && chown postgres:postgres /var/log/postgresql/cron.log
 
-# Entrypoint скрипт
-COPY entrypoint.sh .
-RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["entrypoint.sh"]
+
+CMD ["sh", "-c", "cron && docker-entrypoint-initdb.d/restore.sh && docker-entrypoint.sh postgres"]
