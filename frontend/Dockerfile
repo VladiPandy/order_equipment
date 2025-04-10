@@ -4,7 +4,7 @@ FROM node:18-alpine
 
 WORKDIR '/app'
 
-COPY . .
+COPY ../frontend .
 
 RUN rm -rf node_modules package-lock.json
 

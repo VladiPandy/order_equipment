@@ -11,9 +11,12 @@ import Input from '../../ui/Input'
 import Button from '../../ui/Button'
 import { FiltersContext } from '../../features/filtersProvider'
 import { DateRange } from '../../types'
+import { adminSubPages } from '../../pages/admin/index.tsx'
 
 const FiltersLine: FC = () => {
     const { filters, filtersOptions, changeFilters, resetFilters, loading } = useContext(FiltersContext)
+
+    const filtersIsActive = ![adminSubPages.instruments, adminSubPages.employees].includes(localStorage.getItem('currentPage') as string)
 
     const handleReset = () => {
         resetFilters()
@@ -52,6 +55,7 @@ const FiltersLine: FC = () => {
                     setValue={changeFilters}
                     options={filtersOptions[filter] as string[]}
                     isMultiple={isMultiple}
+                    enabled={filtersIsActive}
                 />
             )
         }

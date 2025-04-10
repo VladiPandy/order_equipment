@@ -8,6 +8,12 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.sessions.backends.db import SessionStore
 from starlette.responses import RedirectResponse
 from django.conf import settings
+import logging
+from django.contrib.auth.models import User
+from sqlalchemy.ext.asyncio import AsyncSession
+import base64
+
+logger = logging.getLogger(__name__)
 
 @sync_to_async
 def get_django_user_from_request(request: Request, db_async_session):
@@ -44,19 +50,20 @@ def get_django_user_from_request(request: Request, db_async_session):
             return None
 
     auth_header = request.headers.get("Authorization")
-    print(auth_header)
+    logger.debug(f"Authorization header: {auth_header}")
     if auth_header and auth_header.startswith("Basic "):
-        print(auth_header.split(" ")[1])
+        logger.debug(f"Basic auth token: {auth_header.split(' ')[1]}")
         try:
             # Извлекаем и декодируем учетные данные
             encoded_credentials = auth_header.split(" ")[1]
             decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
-            print(decoded_credentials)
+            logger.debug(f"Decoded credentials: {decoded_credentials}")
             username, password = decoded_credentials.split(":", 1)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error decoding credentials: {str(e)}")
             return None
         user = authenticate(username=username, password=password)
-        print(user)
+        logger.info(f"Authenticated user: {user}")
         return user
 
 
@@ -67,7 +74,7 @@ def check_auth(func):
         request: Request = kwargs.get('request')
         db_async_session: AsyncSession = kwargs.get('db_async_session')
 
-        print(db_async_session)
+        logger.debug(f"DB async session: {db_async_session}")
         # Получаем пользователя из Django-сессии
         user = await get_django_user_from_request(request, db_async_session)
 
@@ -99,12 +106,12 @@ def admin_only(func):
         request: Request = kwargs.get('request')
         db_async_session: AsyncSession = kwargs.get('db_async_session')
 
-        print(db_async_session)
+        logger.debug(f"DB async session: {db_async_session}")
         # Получаем пользователя из Django-сессии
         user = await get_django_user_from_request(request, db_async_session)
-        print(user)
+        logger.debug(f"User: {user}")
         if not user:
-            print('here ')
+            logger.info("User not authenticated, redirecting to login page")
             login_url = getattr(settings, 'LOGIN_URL', '/login/')
             return RedirectResponse(url=f"http://127.0.0.1/{login_url}?next=http://127.0.0.1/{request.url.path}", status_code=303)
             # raise HTTPException(
@@ -114,6 +121,7 @@ def admin_only(func):
 
         # Проверяем, что пользователь является администратором
         if not user.is_superuser:
+            logger.warning(f"User {user.username} is not an admin")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Недостаточно прав для доступа"
@@ -155,7 +163,7 @@ def admin_or_current_user_only(func):
         # Получаем пользователя из Django-сессии
         user = await get_django_user_from_request(request, db_async_session)
         if not user:
-            print('here ')
+            logger.info("User not authenticated, redirecting to login page")
             login_url = getattr(settings, 'LOGIN_URL', '/login/')
             return RedirectResponse(
                 url=f"http://80.209.240.64{login_url}?next=http://80.209.240.64:{request.url.path}",

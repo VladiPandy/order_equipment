@@ -10,5 +10,8 @@ export const endPoints: Record<string, string> = {
     deleteBooking: 'booking/cancel',
 
     newBooking: 'booking/create',
+
+    infoEquipment: 'info/table_equipment',
+    infoExecutor: 'info/table_executor',
 }
 

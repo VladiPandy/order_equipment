@@ -1,12 +1,13 @@
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'DB_NAME',
-        'USER': 'DB_USER',
-        'PASSWORD': 'DB_PASSWORD',
-        #'HOST': 'host.docker.internal',
-        'HOST': '80.209.240.64',
-        'PORT': 5442,
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST', 'localhost'), 
+        'PORT': os.getenv('DB_PORT', 5432),  
         'OPTIONS': {
            'options': '-c search_path=public,timesheets'
         }

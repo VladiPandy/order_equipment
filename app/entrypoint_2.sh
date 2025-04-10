@@ -1,10 +1,17 @@
-#!/bin/sh
+#!/bin/bash
+
+# Загрузка переменных окружения
+set -a
+source /app/.env
+set +a
 
 echo "Waiting for postgres..."
 
-#while ! nc -z $DB_HOST $DB_PORT; do
-sleep 15
-#done
+# Ждем пока база данных станет доступной
+until pg_isready -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER}; do
+  echo "Postgres is unavailable - sleeping"
+  sleep 2
+done
 
 echo "PostgreSQL started"
 
@@ -13,9 +20,9 @@ python3 manage.py migrate
 
 echo "Creating superuser (if not exists)..."
 # Если суперпользователь уже существует, команда выдаст ошибку, которую можно проигнорировать.
-DJANGO_SUPERUSER_USERNAME=admin \
-DJANGO_SUPERUSER_EMAIL=admin@example.com \
-DJANGO_SUPERUSER_PASSWORD=adminpassword \
+DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME} \
+DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL} \
+DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD} \
 python3 manage.py createsuperuser --noinput || echo "Superuser already exists or creation skipped"
 
 echo "Starting Gunicorn..."

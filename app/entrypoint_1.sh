@@ -1,10 +1,17 @@
-#!/bin/sh
+#!/bin/bash
+
+# Загрузка переменных окружения
+set -a
+source /app/.env
+set +a
 
 echo "Waiting for postgres..."
 
-#while ! nc -z $DB_HOST $DB_PORT; do
-sleep 15
-#done
+# Ждем пока база данных станет доступной
+until pg_isready -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER}; do
+  echo "Postgres is unavailable - sleeping"
+  sleep 2
+done
 
 echo "PostgreSQL started"
 

@@ -6,10 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from fastapi import APIRouter, Request, Response, Depends, HTTPException
 from typing import Dict, List, Any
+import logging
 
 from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
     InfoListsResponse, InfoBookingItem, InfoEquipmentTable, InfoExecutorTable
 from services.booking import UserBookingService
+
+logger = logging.getLogger(__name__)
+
 
 class UserInfoService:
 
@@ -24,8 +28,7 @@ class UserInfoService:
 
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
-
-        print(date_booking_dict)
+        logger.debug("Проверенные даты бронирования: %s", date_booking_dict)
 
         #Формируем запрос в зависимости от роли пользователя
 
@@ -66,6 +69,7 @@ class UserInfoService:
 
         # Если нет записей, возвращаем пустые списки
         if not rows:
+            logger.info("Нет записей для указанных дат.")
             return InfoListsResponse(
                 project=[],
                 date=[],
@@ -93,7 +97,8 @@ class UserInfoService:
             equipments_set.add(row[3])
             executors_set.add(row[4])
             statuses_set.add(row[5])
-        print(projects_set)
+        logger.debug("Уникальные проекты: %s", projects_set)
+        
         # Для не-админов список проектов оставляем пустым
         projects = list(projects_set) # if user.is_staff else []
 
@@ -114,7 +119,8 @@ class UserInfoService:
     ) -> InfoBookingItem:
         # 1. Парсинг даты
         request_dict = request_data.dict(exclude_unset=True)
-        print(request_dict)
+        logger.debug("Запрос данных бронирования: %s", request_dict)
+        
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
@@ -158,17 +164,21 @@ class UserInfoService:
         result = await db.execute(query, params)
         rows = result.fetchall()
 
-        print(rows)
+        logger.debug("Полученные данные бронирования: %s", rows)
         if not rows:
+            logger.info("Нет данных для указанных дат.")
             return []  # Возвращаем пустой список, если данных нет
 
         bookings: List[InfoBookingItem] = []
         for row in rows:
             # row: (id, project, date_booking, analyze, equipment, executor, count_samples, status, comment)
-            print(row)
+            logger.debug("Обработка строки бронирования: %s", row)
+            
             try:
                 date_booking_str = row[2].strftime("%d.%m.%Y") if row[2] else ""
             except Exception:
+                logger.error("Ошибка при форматировании даты: %s", e)
+                
                 date_booking_str = str(row[2])
             booking_item = InfoBookingItem(
                 id=row[0],
@@ -183,6 +193,7 @@ class UserInfoService:
             )
             bookings.append(booking_item)
 
+        logger.debug("Сформированные бронирования: %s", bookings)
         return bookings
 
 
@@ -194,7 +205,8 @@ class UserInfoService:
     ) -> InfoBookingItem:
         # 1. Парсинг даты
         request_dict = request_data.dict(exclude_unset=True)
-        print(request_dict)
+        logger.debug("Запрос данных исполнителей: %s", request_dict)
+        
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
@@ -319,13 +331,15 @@ class UserInfoService:
         result = await db.execute(query, params)
         rows = result.fetchall()
 
+        logger.debug("Полученные данные исполнителей: %s", rows)
         if not rows:
+            logger.info("Нет данных для указанных дат.")
             return []  # Возвращаем пустой список, если данных нет
 
         bookings = []
         for row in rows:
             # row: (id, project, date_booking, analyze, equipment, executor, count_samples, status, comment)
-            print(row)
+            logger.debug("Обработка строки исполнителя: %s", row)
 
             booking_item = InfoExecutorTable(
                 executor=row[0],
@@ -338,7 +352,7 @@ class UserInfoService:
                 sunday=row[7]
             )
             bookings.append(booking_item)
-        print(bookings)
+        logger.debug("Сформированные исполнители: %s", bookings)
         return bookings
 
 
@@ -351,7 +365,7 @@ class UserInfoService:
     ) -> InfoBookingItem:
         # 1. Парсинг даты
         request_dict = request_data.dict(exclude_unset=True)
-        print(request_dict)
+        logger.debug("Запрос данных оборудования: %s", request_dict)
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
@@ -446,14 +460,13 @@ class UserInfoService:
         result = await db.execute(query, params)
         rows = result.fetchall()
 
+        logger.debug("Полученные данные оборудования: %s", rows)
         if not rows:
+            logger.info("Нет данных для указанных дат.")
             return []  # Возвращаем пустой список, если данных нет
 
         bookings = []
         for row in rows:
-            # row: (id, project, date_booking, analyze, equipment, executor, count_samples, status, comment)
-            print(row)
-
             booking_item = InfoEquipmentTable(
                 equipment=row[0],
                 monday=row[1],
@@ -465,6 +478,6 @@ class UserInfoService:
                 sunday=row[7]
             )
             bookings.append(booking_item)
-        print(bookings)
+        logger.debug("Сформированные данные оборудования: %s", bookings)
         return bookings
 

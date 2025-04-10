@@ -1,18 +1,21 @@
-
 services:
   db:
     build:
       context: ./db
-    command: ["postgres", "-p", "5442", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=DB_NAME"]
+    command: ["postgres", "-p", "${DB_PORT}", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=${DB_NAME}"]
     restart: always
     environment:
-      POSTGRES_PASSWORD: 'DB_PASSWORD'
-      POSTGRES_USER: 'DB_USER'
-      POSTGRES_DB: 'DB_NAME'
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5442:5442"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - ./db/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+      - ./db/backups:/var/lib/postgresql/backups
+      - ./db/backup.sh:/var/lib/postgresql/backup.sh
+      - ./db/init_backup.sql:/docker-entrypoint-initdb.d/init_backup.sql
+      - ./db/restore.sh:/docker-entrypoint-initdb.d/restore.sh
 
   admin_app:
     build:
@@ -43,7 +46,7 @@ services:
   react_app:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: frontend/Dockerfile
     ports:
       - "5173:5173"
     env_file:

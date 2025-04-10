@@ -4,20 +4,17 @@ import Navigation from './components/navigation'
 import FiltersLine from './components/filtersLine/index'
 import MainPage from './pages/main'
 
-// import {DataType, Keys} from './types'
-// import { Statuses } from './const'
-
 import AdminPage from './pages/admin'
 import { BookingsProvider } from './features/bookingsProvider'
 import { FiltersProvider } from './features/filtersProvider'
 import { UserContext } from './features/user'
 import { Loader } from './ui/Loader'
+import { FilteredDataProvider } from './features/filteredDataProvider'
+import { InfoProvider } from './features/infoProvider'
 
 
 
 function App() {
-  // const [data, setData] = useState<DataType[]>(Data)
-  // const [filteredData, setFilteredData] = useState<DataType[]>(Data)
   const [currentPage, setCurrentPage] = useState<string>('main')
 
   const {user, logIn} = useContext(UserContext)
@@ -42,8 +39,12 @@ function App() {
       <div className="App">
         <BookingsProvider>
           <FiltersProvider>
-            <FiltersLine />
-            {renderContent()}
+            <InfoProvider>
+              <FilteredDataProvider>
+                <FiltersLine />
+                {renderContent()}
+              </FilteredDataProvider>
+            </InfoProvider>
           </FiltersProvider>
         </BookingsProvider>
       </div>

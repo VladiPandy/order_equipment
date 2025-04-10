@@ -1,4 +1,3 @@
-
 import React, { FC, useEffect, useState } from 'react'
 import { createPortal } from "react-dom"
 import { FilterChangeType, OptionsType } from '../../types'
@@ -20,11 +19,11 @@ type SubmitDataType = {
     analyse?: string
     equipment?: string
     executor?: string
-    sample?: number
+    samples?: number
 }
 
 type API_FilterType = {
-    date: {[key: string]: boolean}
+    date: {[key: string]: 0 | 1 | 2}
     analyse: {[key: string]: string}
     equipment: {[key: string]: string}
     executor: {[key: string]: string}
@@ -66,12 +65,14 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
                     options[key] = value as number
                     break
                 case 'date':
-                    options[key] = value as {[key: string]: boolean}
+                    options[key] = value as {[key: string]: 0 | 1 | 2}
                     break
                 default:
                     options[key] = [] as string[]
-                    Object.entries(value).forEach(([_, value]) => {
-                        options[key].push(value)
+                    Object.entries(value).forEach(([, value]) => {
+                        if (Array.isArray(options[key])) {
+                            (options[key] as string[]).push(value)
+                        }
                     })
                     break
             }
@@ -121,7 +122,6 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
                 setDate(value as string)
                 break
             default:
-                console.log('default', value, type)
                 break
         }
     }
@@ -133,7 +133,14 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
         } else if (readyToSubmit) {
             setReadyToSubmit(false)
         }
-    }, [analyze, date, item, executor, count])
+    }, [analyze, date, item, executor])
+    useEffect(() => {
+        if (analyze && date && item && executor && count) {
+            setReadyToSubmit(true)
+        } else if (readyToSubmit) {
+            setReadyToSubmit(false)
+        }
+    }, [count])
 
     const handleDateChange = (value: string | undefined) => {
         setDate(value || '')
@@ -186,7 +193,7 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
                 />
                 <Input 
                     placeholder={`Количество (макс. ${options?.samples_limit})`} 
-                    title={'Количество'} 
+                    title={`Количество (макс. ${options?.samples_limit})`} 
                     value={count} 
                     isRequired={true} 
                     setValue={(value) => setCount(value ? Number(value) : undefined)} 

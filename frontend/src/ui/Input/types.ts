@@ -33,6 +33,7 @@ export interface DropDownInputProps extends BaseInputProps {
     children?: JSX.Element
     filter: KeyType
     isMultiple?: boolean
+    enabled?: boolean
 }
 
 export interface CalendarInputProps extends BaseInputProps {

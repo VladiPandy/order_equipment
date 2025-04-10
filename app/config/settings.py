@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import os
 
@@ -15,7 +14,7 @@ include(
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-SECRET_KEY = 'b5+*rf30rkv906o57yv7l1a74qx$@-^4a1&e+ndax7n#&f^a!j'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG', False) == 'True'
 

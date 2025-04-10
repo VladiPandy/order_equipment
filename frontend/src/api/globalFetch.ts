@@ -1,10 +1,12 @@
 import { axiosInstance } from "./axiosHelper";
 import { onError } from "../utils/toast";
 
+const user = localStorage.getItem("user") || undefined
+
 // eslint-disable-next-line
 export const globalGet = (path: string, callback: any, body: any = {}) => {
     console.log(`Start get ${path}`)
-    axiosInstance.request({
+    axiosInstance(user).request({
         method: 'get',
         url: path, 
         data: body,
@@ -22,7 +24,7 @@ export const globalGet = (path: string, callback: any, body: any = {}) => {
 export const globalPost = (path: string, callback: any, body: any) => {
     console.log(`Start post ${path}`, body)
 
-    axiosInstance.request({
+    axiosInstance(user).request({
         method: 'post',
         url: path, 
         data: body,
@@ -40,7 +42,7 @@ export const globalPost = (path: string, callback: any, body: any) => {
 export const globalDelete = (path: string, callback: any, body: any) => {
     console.log(`Start delete ${path}`, body)
 
-    axiosInstance.request({
+    axiosInstance(user).request({
         method: 'delete',
         url: path, 
         data: body,

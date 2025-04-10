@@ -101,21 +101,6 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
         })
     }
 
-    // useEffect(() => {
-    //     console.log(filters)
-    // }, [filters])
-
-    // useEffect(() => {
-    //     setLoading(true)
-    //     globalPost(endPoints.filters, (data: Filters) => {
-    //         prepareFiltersOptions(data)
-    //         setLoading(false)
-    //     }, {
-    //         start: filters.date?.start,
-    //         end: filters.date?.end
-    //     })
-    // }, [])
-
     const changeFilters = (atr: FilterValue, type: KeyType) => {
         if (type === 'date') {
             const dateRange = atr as DateRange;

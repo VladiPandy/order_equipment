@@ -6,22 +6,37 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 import os
 import django
-
-
-from api.v1 import info, booking, auth
+import logging
+from dotenv import load_dotenv
 from db import postgres
+
+
+
+# Загрузка переменных окружения
+load_dotenv()
+
+# Импортируем конфигурацию логирования
+from core.config import LOGGING_CONFIG
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
+
+from api.v1 import info, booking, auth
+
 
 async_engine = None
 AsyncSessionLocal = None
 
 async def lifespan(app: FastAPI):
+    logger.info("Инициализация приложения FastAPI")
     database_url = (
-        f"postgresql+asyncpg://{'DB_USER'}:"
-        f"{'DB_PASSWORD'}@{'80.209.240.64'}:"
-        f"{'5442'}/{'DB_NAME'}"
+        f"postgresql+asyncpg://{os.getenv('DB_USER')}:"
+        f"{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:"
+        f"{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     )
 
     # Создаем асинхронный движок
@@ -30,6 +45,7 @@ async def lifespan(app: FastAPI):
         future=True,
         echo=False,  # Включите True для логирования SQL-запросов
     )
+    logger.debug("Создан асинхронный движок SQLAlchemy")
 
     # Создаем фабрику сессий
     postgres.db_session_factory = sessionmaker(
@@ -37,7 +53,9 @@ async def lifespan(app: FastAPI):
         expire_on_commit=False,
         class_=AsyncSession
     )
+    logger.debug("Создана фабрика сессий SQLAlchemy")
     yield
+    logger.info("Завершение работы приложения FastAPI")
     await async_engine.dispose()
 
 
@@ -56,11 +74,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+logger.info("Регистрация маршрутов FastAPI")
 app.include_router(info.router, prefix='/api/v1/info', tags=['Информация'])
 app.include_router(booking.router, prefix='/api/v1/booking', tags=['Бронирование'])
 app.include_router(auth.router, prefix='/api/v1/auth', tags=['Авторизация'])
 
 if __name__ == '__main__':
+    logger.info("Запуск сервера Uvicorn")
     uvicorn.run(
         'fastapi_app:app',
         host='0.0.0.0',

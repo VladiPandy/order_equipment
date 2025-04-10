@@ -25,7 +25,6 @@ class CustomAdminSite(AdminSite):
         return request.user.is_authenticated and request.user.is_staff
 
     def index(self, request, extra_context=None):
-        print(request.user.is_staff)
         # Если пользователь аутентифицирован, но не является staff, перенаправляем его на главную страницу
         if request.user.is_authenticated and not request.user.is_staff:
             return HttpResponseRedirect(reverse('home'))

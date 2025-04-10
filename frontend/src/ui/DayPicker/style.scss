@@ -38,6 +38,22 @@
                 color: var(--color-blue);
                 cursor: not-allowed;
             }
+            &.busy {
+                background-color: var(--color-yellow);
+                position: relative;
+                &:hover::after {
+                    position: absolute;
+                    content: "Часть полей может быть недоступна";
+                    background: var(--toastify-spinner-color-empty-area);
+                    width: 20rem;
+                    font-size: 0.7vw;
+                    padding: 0.5rem;
+                    border-radius: var(--border-radius);
+                    top: 4rem;
+                    left: 0;
+                    z-index: 100000;
+                }
+            }
         }
     }
 }

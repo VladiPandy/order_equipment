@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from datetime import datetime, timedelta
 from basic_elements.models import *
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 def get_week_period_choices():
@@ -57,7 +58,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
 
         :raises ValidationError: Если уже существует другая открытая регистрация.
         """
-        print(WorkingDayOfWeek.objects.count())
+
         if self.week_period:
             # Исключаем текущую запись, если она уже существует (например, при обновлении)
             if WorkingDayOfWeek.objects.exclude(pk=self.pk).filter(
@@ -179,6 +180,7 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
         ('Работает', 'Работает'),
         ('Выходной', 'Выходной'),
         ('Отпуск', 'Отпуск'),
+        ('Занят', 'Занят'),
         ('Болеет', 'Болеет'),
     ]
 
@@ -196,6 +198,11 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
     friday = models.CharField(default='Выходной', verbose_name='Пятница', choices=STATUS_WORKING)
     saturday = models.CharField(default='Выходной', verbose_name='Суббота', choices=STATUS_WORKING)
     sunday = models.CharField(default='Выходной', verbose_name='Воскресенье', choices=STATUS_WORKING)
+
+    limit_executor = models.IntegerField(default=False,
+                                        verbose_name='Ограничение приборов на сотрудника в день',
+                                        validators=[MinValueValidator(0),
+                                                    MaxValueValidator(10)])
 
     class Meta:
         verbose_name = 'Рабочий график сотрудника'

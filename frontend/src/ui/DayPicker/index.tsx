@@ -7,7 +7,7 @@ type DayPickerProps = {
     setCurrentDay: (args?: string) => void,
     isRequired: boolean,
     title: string,
-    availableDates?: { [key: string]: boolean }
+    availableDates?: { [key: string]: 0 | 1 | 2 }
 }
 
 const days: DaysType[] = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
@@ -15,7 +15,7 @@ const DayPicker: FC<DayPickerProps> = ({currentDay, setCurrentDay, isRequired, t
 
 
 
-    const onClickDay = (e: React.MouseEvent, day: string, isAvailable: boolean) => {
+    const onClickDay = (e: React.MouseEvent, day: string, isAvailable: 0 | 1 | 2) => {
         e.preventDefault()
         e.stopPropagation()
         if (!isAvailable) return
@@ -31,7 +31,7 @@ const DayPicker: FC<DayPickerProps> = ({currentDay, setCurrentDay, isRequired, t
             <button 
                 key={key} 
                 onClick={(e) => onClickDay(e, key, value)} 
-                className={`${currentDay?.includes(key) ? 'active' : ''} ${!value ? 'disabled' : ''}`}
+                className={`${currentDay?.includes(key) ? 'active' : ''} ${!value ? 'disabled' : value === 2 ? 'busy' : ''}`}
             >
                 {days[index]}
             </button>

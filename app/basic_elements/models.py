@@ -48,6 +48,25 @@ class Equipment(UUIDMixin,TimeStampedMixin):
     def __str__(self):
         return f"{self.name}"
 
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+
+        if self.name:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if Equipment.objects.exclude(pk=self.pk).filter(
+                    name=self.name).exists():
+                raise ValidationError(
+                    f"Прибор с именем '{self.name}' уже существует.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
 
 # Модель Анализа
 class AnalyzeType(UUIDMixin, TimeStampedMixin):
@@ -62,6 +81,26 @@ class AnalyzeType(UUIDMixin, TimeStampedMixin):
 
     def __str__(self):
         return f"{self.type}"
+
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+
+        if self.type:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if AnalyzeType.objects.exclude(pk=self.pk).filter(
+                    type=self.type).exists():
+                raise ValidationError(
+                    f"Тип анализа с именем '{self.type}' уже существует.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
 
 
 # Модель Анализа
@@ -79,6 +118,26 @@ class Analyze(UUIDMixin, TimeStampedMixin):
     def __str__(self):
         return f"{self.analyze_name}  типа  {self.analyze_type}"
 
+
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+
+        if self.analyze_name:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if Analyze.objects.exclude(pk=self.pk).filter(
+                    analyze_name=self.analyze_name).exists():
+                raise ValidationError(
+                    f"Анализ с именем '{self.analyze_name}' уже существует.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
 # Модель Исполнителя
 class Executor(UUIDMixin, TimeStampedMixin):
     first_name = models.CharField(max_length=255, verbose_name='Имя')
@@ -94,6 +153,28 @@ class Executor(UUIDMixin, TimeStampedMixin):
 
     def __str__(self):
         return f"{self.first_name}  {self.last_name}  {self.patronymic}"
+
+
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если is_open установлен в True, то в базе не должно быть другой записи с is_open = True.
+
+        :raises ValidationError: Если уже существует другая открытая регистрация.
+        """
+
+        if self.first_name:
+            # Исключаем текущую запись, если она уже существует (например, при обновлении)
+            if Executor.objects.exclude(pk=self.pk).filter(
+                    first_name=self.first_name, last_name=self.last_name,
+                    patronymic=self.patronymic).exists():
+                raise ValidationError(
+                    f"Исполнитель с ФИО '{self.last_name} {self.first_name} {self.patronymic}' уже существует.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
 
 # Модель Администратора
 class Adminstrator(UUIDMixin, TimeStampedMixin):

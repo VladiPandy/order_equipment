@@ -10,7 +10,8 @@ export const DropDownInput: FC<DropDownInputProps> = ({
     filter,
     value = [],
     setValue,
-    isMultiple = true
+    isMultiple = true,
+    enabled = true
 }) => {
     const handleChange = (newValue: string | string[], filter: string) => {
         setValue(newValue, filter as KeyType)
@@ -25,6 +26,7 @@ export const DropDownInput: FC<DropDownInputProps> = ({
             value={value}
             onChange={handleChange}
             isMultiple={isMultiple}
+            enabled={enabled}
         />
     )
 } 

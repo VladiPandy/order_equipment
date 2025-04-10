@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 
 import Button from '../../ui/Button'
 // import StatusChip from '../../ui/StatusChip'
@@ -12,16 +12,20 @@ import EmployeesTable from '../../components/tables/employeesPage'
 import InstrumentsTable from '../../components/tables/instrumentsPage'
 
 // const headers = ['Проект', 'Дата бронирования', 'Анализ', 'Прибор', 'Исполнитель', 'Число образцов', 'Статус']
-const pages = {total: 'total', instruments: 'instruments', employees: 'employees'}
+export const adminSubPages = {total: 'total', instruments: 'instruments', employees: 'employees'}
 
 const AdminPage: FC = () => {
-    const [currentPage, setCurrentPage] = useState<string>(pages.total)
+    const [currentPage, setCurrentPage] = useState<string>(adminSubPages.total)
+
+    useEffect(() => {
+        localStorage.setItem('currentPage', currentPage)
+    }, [currentPage])
 
     const renderPage = () => {
         switch (currentPage) {
-            case pages.instruments:
+            case adminSubPages.instruments:
                 return <InstrumentsTable />
-            case pages.employees:
+            case adminSubPages.employees:
                 return <EmployeesTable />
             default:
                 return <TotalTable/>
@@ -31,9 +35,9 @@ const AdminPage: FC = () => {
     return (
         <div className="AdminPage">
             <div className='AdminPage_navigation'>
-                <Button type={currentPage === pages.total ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(pages.total)}>Общая информация</Button>
-                <Button type={currentPage === pages.instruments ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(pages.instruments)}>Зантость приборов</Button>
-                <Button type={currentPage === pages.employees ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(pages.employees)}>Занятость сотрудников</Button>
+                <Button type={currentPage === adminSubPages.total ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(adminSubPages.total)}>Общая информация</Button>
+                <Button type={currentPage === adminSubPages.instruments ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(adminSubPages.instruments)}>Занятость приборов</Button>
+                <Button type={currentPage === adminSubPages.employees ? 'primary' : 'secondary'} onClick={()=>setCurrentPage(adminSubPages.employees)}>Занятость сотрудников</Button>
             </div>
             {renderPage()}
         </div>

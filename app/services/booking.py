@@ -6,13 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Request, Response, Depends, HTTPException
 from typing import Dict, List, Any
 import json
+import logging
 
 from models.schemas.booking import PossibleCreateBookingRequest, \
     PossibleCreateBookingResponse, CreateBookingResponse, \
     CreateBookingRequest, PossibleChangesResponse, PossibleChangesRequest, \
     ChoseData, ChangeData, ChangeRequest, ChangeResponse, CancelResponse, \
     CancelRequest, FeedbackResponse, FeedbackRequest
+from sql.info_queries import *
 
+logger = logging.getLogger(__name__)
 
 class UserBookingService:
 
@@ -27,11 +30,11 @@ class UserBookingService:
         :return: Объект datetime.date.
         :raises ValueError: Если ни один формат не подходит.
         """
-        print(date_str)
         for fmt in ('%y-%m-%d','%Y-%m-%d','%d-%m-%Y', '%d-%m-%y','%d.%m.%Y', '%d.%m.%y'):
             try:
                 return datetime.strptime(str(date_str), fmt).date()
             except ValueError:
+                logger.error("Неверный формат даты: %s", date_str) 
                 continue
 
     @staticmethod
@@ -53,7 +56,7 @@ class UserBookingService:
             if 'start' in request and request['start']:
                 try:
                     date_start = await UserBookingService.parse_date(request['start'])
-
+                    logger.debug("Дата начала: %s", date_start)
                 except ValueError as e:
                     raise HTTPException(status_code=400,
                                         detail=f"Ошибка формата start: {e}")
@@ -97,8 +100,8 @@ class UserBookingService:
                 date_start = today - timedelta(weeks=2)
                 date_end = today + timedelta(weeks=2)
 
-            print(date_start)
-            print(date_end)
+            logger.debug(
+                f"Рассматриваем период {date_start}-{date_end}")
             if date_start > date_end:
                 raise HTTPException(status_code=400,
                                     detail="Дата начала не может быть позже даты окончания.")
@@ -116,12 +119,12 @@ class UserBookingService:
                 'dates_list': dates
             }
         except Exception as e:
+            logger.error("Ошибка валидации дат: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Ошибка валидации дат: {e}")
 
     @staticmethod
     async def get_uuids(db: AsyncSession,username, data) -> None:
-        print(data)
         try:
             if 'date' in data:
 
@@ -134,6 +137,7 @@ class UserBookingService:
                 date_val = datetime.strptime('20.01.5999',
                                                       '%d.%m.%Y').date()
         except Exception as e:
+            logger.error("Неверный формат даты: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат даты: {e}")
 
@@ -152,6 +156,7 @@ class UserBookingService:
                 analyze_val = '1 = 1'
                 analyze_id = 'NULL'
         except Exception as e:
+            logger.error("Неверный формат analyse: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат анализа: {e}")
 
@@ -177,6 +182,7 @@ class UserBookingService:
                 operator_val = '1 = 1'
                 operator_id = 'NULL'
         except Exception as e:
+            logger.error("Неверный формат executor: %s", e)
             raise HTTPException(status_code=400,
                             detail=f"Неверный формат исполнителя: {e}")
 
@@ -195,12 +201,12 @@ class UserBookingService:
             'operator_id': operator_id,
             'user_id': items[0] if items else ''
         }
-
+        logger.debug("Полученные UUID: %s", uuids_json)
         return uuids_json
 
     @staticmethod
     async def validate_token(db: AsyncSession, cookie_createkey: str) -> None:
-        print(cookie_createkey)
+        (cookie_createkey)
         timestamp_query = text("""
             SELECT update_timestamp, write_timestamp, id_delete
             FROM public.block_booking
@@ -210,25 +216,27 @@ class UserBookingService:
         result = await db.execute(timestamp_query,
                                   {"cookie_key": cookie_createkey})
         row = result.fetchone()
-        print(row)
         if not row:
+            logger.warning("Токен не найден: %s", cookie_createkey)
             raise HTTPException(status_code=403, detail="Токен не найден")
         update_ts, write_ts, id_delete = row
         effective_ts = update_ts if update_ts is not None else write_ts
-        print(effective_ts)
         if effective_ts is None:
+            logger.warning("Отсутствует временная метка в токене: %s", cookie_createkey)
             raise HTTPException(status_code=403,
                                 detail="Отсутствует временная метка в токене")
         now = datetime.utcnow()
         if now - effective_ts > timedelta(minutes=5):
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
+            logger.warning("Токен истек: %s", cookie_createkey)
             raise HTTPException(status_code=403,
                                 detail="Заполнение запрещено – токен истёк")
 
         if id_delete:
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
+            logger.warning("Токен заблокирован: %s", cookie_createkey)
             raise HTTPException(status_code=403,
                                 detail="Заполнение запрещено – токен заблокирован")
 
@@ -246,9 +254,11 @@ class UserBookingService:
             })
             new_cookie_key = result.scalar()
             await db.commit()
+            logger.info("Создан новый cookie_key: %s", new_cookie_key)
             return new_cookie_key
         except Exception as e:
             await db.rollback()
+            logger.error("Ошибка при создании токена: %s", e)
             raise HTTPException(status_code=500,
                                 detail=f"Ошибка при создании токена: {e}")
 
@@ -264,8 +274,10 @@ class UserBookingService:
         try:
             result = await db.execute(block_token_query)
             await db.commit()
+            logger.info("Токен заблокирован: %s", cookie_createkey)
         except Exception as e:
             await db.rollback()
+            logger.error("Ошибка при блокировке токена: %s", e)
             raise HTTPException(status_code=500,
                                 detail=f"Ошибка при блокировки токена: {e}")
 
@@ -287,8 +299,10 @@ class UserBookingService:
         try:
             result = await db.execute(update_query)
             await db.commit()
+            logger.info("Период блокировки обновлен для токена: %s", cookie_createkey)
         except Exception as e:
             await db.rollback()
+            logger.error("Ошибка при обновлении записи: %s", e)
             raise HTTPException(status_code=500,
                                 detail=f"Ошибка при обновлении записи: {e}")
 
@@ -299,7 +313,24 @@ class UserBookingService:
                                      blocking_element
                                 ) -> None:
         new_values_query = text(f"""
-                             with  days_employes as (
+                             with limit_exec as
+                                (
+                                SELECT x.executor_id, limit_executor  FROM public.control_enter_workerweekstatus x
+                                        where
+                                            to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
+                                            and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
+                                )
+                                , limit_exec_per_day as (
+                                    select x.date_booking, x.executor_id, max(le.limit_executor) lim , count(1) cc
+                                    from projects_booking x
+                                    left join limit_exec le on x.executor_id = le.executor_id
+                                    where x.date_booking between '{date_booking_dict['date_start']}'::date 
+                                                                            and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    group by x.date_booking, x.executor_id
+                                    having  max(le.limit_executor) >= count(1)
+                                )
+                                ,days_employes as 
+                                (
                                 SELECT 1 d, x.executor_id  FROM public.control_enter_workerweekstatus x
                                 where x.monday = 'Работает' 
                                     and to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
@@ -398,6 +429,14 @@ class UserBookingService:
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
                                     group by analyse_id ,equipment_id 
                                 )
+                                  ,used_limits_analese_equipment_per_day as (
+		                                    select date_booking, analyse_id ,equipment_id ,sum(count_analyses) used_limit
+		                                    from projects_booking
+		                                    where {blocking_element} project_id = '{uuids_json['user_id']}' and
+                                                 date_booking between '{date_booking_dict['date_start']}'::date 
+                                                and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+		                                    group by analyse_id ,equipment_id, date_booking
+		                                )
                                 ,blocking_list as
                             (
                                 select *
@@ -423,6 +462,10 @@ class UserBookingService:
                                 , z.analazy_id::text
                                 , v.equipment_id::text
                                 , v.operator_id::text
+                                , z.count_samples samples_limit_per_analyze
+                                , coalesce(ul_per_day.used_limit,0) used_limit_per_day
+                                , z.count_samples - coalesce(ul_per_day.used_limit,0) limit_have_per_day
+                                , v.is_priority
                             FROM generate_series(
                                 DATE '{date_booking_dict['date_start']}'::date, -- Начальная дата
                                 DATE '{date_booking_dict['date_end']}'::date, -- Конечная дата
@@ -447,17 +490,25 @@ class UserBookingService:
                                 else bl.date_booking = date::DATE and  bl.analyse_id = z.analazy_id and bl.equipment_id = v.equipment_id and bl.executor_id = v.operator_id
                             end 
                             left join used_limits_analese_equipment ul on ul.analyse_id = z.analazy_id and ul.equipment_id = v.equipment_id
+                            left join used_limits_analese_equipment_per_day ul_per_day on ul_per_day.analyse_id = z.analazy_id 
+                            					and ul_per_day.equipment_id = v.equipment_id
+                            					and ul_per_day.date_booking = date::DATE
                             left join executor_limit exl on exl.executor_id = v.operator_id
                             left join equipment_limit eql on eql.equipment_id = v.equipment_id
                             right join days_working dw on dw.d = EXTRACT(DOW from date::DATE)
                             right join days_employes de on de.d = EXTRACT(DOW from date::DATE) and de.executor_id = v.operator_id
+                            left join limit_exec_per_day led on date::DATE = led.date_booking and ex.id = led.executor_id
                     where status = 'active' 
                         {blocking_element} and y.id = '{uuids_json['user_id']}'  
-                        and bl.id is null
+                        and bl.id is null 
+                            and (coalesce(z.count_samples,0) - coalesce(ul_per_day.used_limit,0)) > 0
+                            and (coalesce(x.limit_samples,0) - coalesce(ul.used_limit,0)) > 0
+                            and led.executor_id is null
                         and {uuids_json['date_text']}
                         and {uuids_json['analyze_val']}
                         and {uuids_json['equipment_val']}
                         and {uuids_json['operator_val']}
+                        order by date::DATE, v.is_priority desc
                        """)
         availible_values = await db.execute(new_values_query)
         list_availible_values = availible_values.fetchall()
@@ -470,6 +521,7 @@ class UserBookingService:
                     """
         block_dates = await db.execute(text(block_date))
         list_block_values = block_dates.fetchall()
+        logger.debug("Заблокированные даты: %s", list_block_values)
         return list_availible_values, list_block_values
 
     @staticmethod
@@ -491,18 +543,18 @@ class UserBookingService:
                         and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) and for_priority = {items[0][2]}
                         ;"""))
         is_open_items = is_open_global.fetchall()
-        print('is_open_items')
-        print(is_open_items)
+        logger.debug("Статус открытия глобального окна: %s", is_open_items)
         if not is_open_items:
             is_open_local = await db.execute(text(
                 f"""SELECT week_period  FROM \"control_enter_isopenregistration\" 
                                     WHERE is_open = True
                                     ;"""))
             is_open_l_items = is_open_local.fetchall()
-            print(is_open_l_items)
+            logger.debug("Статус открытия локального окна: %s", is_open_l_items)
         else:
             is_open_l_items = None
         if is_open_l_items and is_open_items :
+            logger.warning("Создание записи запрещено администратором.")
             raise HTTPException(status_code=403,
                                 detail="Создание записи запрещено администратором.")
         else:
@@ -511,6 +563,7 @@ class UserBookingService:
             # Формируем словарь с ключами 'start' и 'end'
             request_dict_prev['start'] =  start_date.strip()
             request_dict_prev['end'] = end_date.strip()
+            logger.debug("Выбранные даты: %s - %s", start_date, end_date)
             # Преобразуем словарь в JSON-строку
             return request_dict_prev
 
@@ -524,6 +577,7 @@ class UserBookingService:
     ) -> PossibleCreateBookingResponse:
 
         if user.is_superuser:
+            logger.warning("Создание записи администратором запрещено")
             raise HTTPException(status_code=403, detail="Создание записи администратором запрещено")
         request_dict_prev = request_data.dict(exclude_unset=True)
         request_dict = await UserBookingService.get_period(
@@ -535,8 +589,7 @@ class UserBookingService:
 
         if not cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Если токен отсутствует, создаем новый
-            print(' Если токен отсутствует, создаем новый')
-            print(uuids_json['user_id'])
+            logger.info("Создание нового токена для пользователя: %s", uuids_json['user_id'])
 
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
@@ -545,7 +598,8 @@ class UserBookingService:
 
         elif cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Блокируем старый токен
-            print('Блокируем старый токен')
+            logger.info("Блокировка старого токена и создание нового для пользователя: %s", uuids_json['user_id'])
+            
             await UserBookingService.block_cookie_key(db,
                                                   cookie_createkey)
             # Если токен отсутствует, создаем новый
@@ -558,10 +612,10 @@ class UserBookingService:
         elif cookie_createkey:
             await UserBookingService.validate_token(db, cookie_createkey)
         else:
+            logger.warning("Заполнение запрещено")
             raise HTTPException(status_code=403, detail="Заполнение запрещено")
 
         await UserBookingService.update_blocking_period(db, uuids_json, cookie_createkey)
-        print('heer')
         list_availible_values, list_block_values = await UserBookingService.availible_values(db,
                                             uuids_json,
                                             date_booking_dict,
@@ -569,6 +623,7 @@ class UserBookingService:
                                             )
 
         if not list_availible_values:
+            logger.warning("Нет доступных вариантов")
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
@@ -578,10 +633,12 @@ class UserBookingService:
         executor_json = {}
         samples_list = []
         samples_used = []
-        print('list_block_values')
-        print(list_block_values)
+        samples_per_day = []
+        samples_used_per_day = []
+        dates_list = []
         for val in list_availible_values:
             const_date = val[0].strftime('%d.%m.%Y')
+            dates_list.append(const_date)
             if len(list_block_values) > 0:
                 for bl in list(set(list_block_values)):
                     bl_date = bl[0].strftime('%d.%m.%Y')
@@ -600,6 +657,8 @@ class UserBookingService:
                             date_json[elem] += 1
                     samples_list.append(val[7])
                     samples_used.append(val[9])
+                    samples_per_day.append(val[-2])
+                    samples_used_per_day.append(val[-3])
             else:
                 for elem in date_booking_dict['dates_list']:
                     if elem in date_json and  elem == const_date:
@@ -613,18 +672,29 @@ class UserBookingService:
                 executor_json[val[14]] = str(val[6])
                 samples_list.append(val[7])
                 samples_used.append(val[9])
+                samples_per_day.append(val[-2])
+                samples_used_per_day.append(val[-3])
 
-        print(uuids_json)
         const_samples_limit = int(list(set(samples_list))[0])
         const_samples_used = int(list(set(samples_used))[0])
+        const_samples_limit_per_day = max(map(int,list(set(samples_per_day))))
+        const_samples_used_per_day = max(map(int, list(set(samples_used_per_day))))
+
+        samples_limit = const_samples_limit if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
+        samples_used = const_samples_used if len(list(set(dates_list))) > 1 else const_samples_used_per_day
+
+        if (const_samples_limit - const_samples_used) <= 0:
+            logger.warning("Достигнут недельный лимит")
+            raise HTTPException(status_code=403,
+                                detail="Достигнут недельный лимит")
 
         return PossibleCreateBookingResponse(
             date=date_json,
             analyse=analyze_json,
             equipment=equipment_json,
             executor=executor_json,
-            samples_limit=const_samples_limit,
-            used=const_samples_used
+            samples_limit=samples_limit,
+            used=samples_used
         )
 
     @staticmethod
@@ -643,8 +713,8 @@ class UserBookingService:
                 """)
         result = await db.execute(check_query)
         row = result.fetchone()
-        print()
         if row[0]:
+            logger.warning("Проверка не пройдена для токена: %s", cookie_createkey)
             raise HTTPException(status_code=404,
                                 detail="Проверка не пройдена")
 
@@ -660,15 +730,14 @@ class UserBookingService:
 
         request_dict = request_data.dict(exclude_unset=True)
         if not cookie_createkey:
+            logger.warning("Запись запрещена, токен отсутствует")
             raise HTTPException(status_code=403, detail="Запись запрещена")
 
         await UserBookingService.validate_token(db, cookie_createkey)
-        print(request_dict)
+        logger.debug("Создание бронирования с данными: %s", request_dict)
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                     request_dict)
 
-        print('uuids_json')
-        print(uuids_json)
         await UserBookingService.checking_blocking_period_with_creating(db, uuids_json,
                                            cookie_createkey)
 
@@ -687,9 +756,11 @@ class UserBookingService:
             await UserBookingService.block_cookie_key(db,
                                                       cookie_createkey)
             await db.commit()
+            logger.info("Бронирование успешно создано с id: %s", new_id)
             return new_id
         except Exception as e:
             await db.rollback()
+            logger.error("Ошибка при добавлении записи: %s", e)
             raise HTTPException(status_code=500,
                                 detail=f"Ошибка при добавлении записи: {e}")
 
@@ -702,12 +773,14 @@ class UserBookingService:
                 f"SELECT project_name FROM \"project\" WHERE id = '{project_id}' ;"))
             project_name = str(project_query.scalars().all()[0])
         except Exception as e:
+            logger.error("Неверный формат проекта: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат проекта: {e}")
 
         try:
             date_info = date_booking.strftime('%d.%m.%Y')
         except Exception as e:
+            logger.error("Неверный формат даты: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат даты: {e}")
 
@@ -716,6 +789,7 @@ class UserBookingService:
                 f"SELECT analyze_name FROM \"analyze\" WHERE id = '{analyse_id}' ;"))
             analyze_name = str(analyze_query.scalars().all()[0])
         except Exception as e:
+            logger.error("Неверный формат анализа: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат анализа: {e}")
 
@@ -724,6 +798,7 @@ class UserBookingService:
                 f"SELECT name FROM \"equipment\" WHERE id = '{equipment_id}' ;"))
             equipment_name = str(equipment_query.scalars().all()[0])
         except Exception as e:
+            logger.error("Неверный формат оборудования: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат оборудования: {e}")
 
@@ -732,6 +807,7 @@ class UserBookingService:
                 f"SELECT  concat(first_name,' ',last_name,' ',patronymic)  FROM \"executor\" WHERE id = '{executor_id}' ;"))
             executor_fio = str(executor_query.scalars().all()[0])
         except Exception as e:
+            logger.error("Неверный формат исполнителя: %s", e)
             raise HTTPException(status_code=400,
                                 detail=f"Неверный формат исполнителя: {e}")
 
@@ -748,6 +824,7 @@ class UserBookingService:
             'comment': comment
         }
 
+        logger.debug("Информация о бронировании: %s", info_json)
         return info_json
 
     @staticmethod
@@ -755,12 +832,9 @@ class UserBookingService:
                                    user,
                                    db: AsyncSession) -> PossibleChangesResponse:
         if not user.is_staff:
+            logger.warning("Изменение записи пользователем запрещено")
             raise HTTPException(status_code=403, detail="Изменение записи пользователем запрещено")
         request_dict = request_data.dict(exclude_unset=True)
-
-        # request_dict = await UserBookingService.get_period(
-        #     db, user)
-        #
 
 
         # Пример запроса для получения данных по заявке (адаптируйте по вашей схеме)
@@ -777,8 +851,9 @@ class UserBookingService:
             # "date_end": date_booking_dict['date_end']
         })
         row = result.fetchone()
-        print(row)
+
         if not row:
+            logger.warning("Запись не найдена для id: %s", request_dict['id'])
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         booking_info = await UserBookingService.booking_info(db,row)
@@ -795,16 +870,18 @@ class UserBookingService:
 
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                         request_dict)
-        print(date_booking_dict)
-        print('uuids_json')
+
+        logger.debug("UUIDs для изменения: %s", uuids_json)
+
         list_availible_values,list_block_values \
             = await UserBookingService.availible_values(db,
                   uuids_json,
                   date_booking_dict,
                   '-----'
                   )
-        print(list_availible_values)
+
         if not list_availible_values:
+            logger.info("Нет изменений для записи id")
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
@@ -815,6 +892,10 @@ class UserBookingService:
         executor_json = {}
         samples_list = []
         samples_used = []
+
+        samples_per_day = []
+        samples_used_per_day = []
+        dates_list = []
 
         for val in list_availible_values:
 
@@ -833,12 +914,21 @@ class UserBookingService:
 
             samples_list.append(val[7])
             samples_used.append(val[9])
+            samples_per_day.append(val[-2])
+            samples_used_per_day.append(val[-3])
 
-        print(samples_list)
         const_samples_limit = int(list(set(samples_list))[0])
         const_samples_used = int(list(set(samples_used))[0])
 
-        print(booking_info)
+        const_samples_limit_per_day = max(map(int, list(set(samples_per_day))))
+        const_samples_used_per_day = max(
+            map(int, list(set(samples_used_per_day))))
+
+
+        if (const_samples_limit - const_samples_used) <= 0:
+            raise HTTPException(status_code=403,
+                                detail="Достигнут недельный лимит")
+
         return PossibleChangesResponse(
                 chose=ChoseData(
                     project=booking_info['project_name'],
@@ -855,8 +945,8 @@ class UserBookingService:
                     analyse=analyze_json,
                     equipment=equipment_json,
                     executor=executor_json,
-                    samples_limit=const_samples_limit,
-                    samples_used = const_samples_used,
+                    samples_limit=const_samples_limit_per_day,
+                    samples_used = const_samples_used_per_day,
                     status={
                                 # '0': 'Не выбран',
                                 "start": 'На рассмотрении',
@@ -886,6 +976,8 @@ class UserBookingService:
          6. Иначе, обновляет запись и возвращает id и словарь изменённых полей.
         """
         if not user.is_staff:
+            logger.warning("Изменение записи пользователем запрещено")
+            
             raise HTTPException(status_code=403, detail="Изменение записи пользователем запрещено")
         request_dict = request_data.dict(exclude_unset=True)
 
@@ -908,6 +1000,8 @@ class UserBookingService:
         })
         row = result.fetchone()
         if not row:
+            logger.warning("Запись не найдена")
+            
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         booking_info = await UserBookingService.booking_info(db, row)
@@ -948,6 +1042,8 @@ class UserBookingService:
 
         #5. Если изменений нет, возвращаем сообщение с пустым changed_fields
         if not changes:
+            logger.info("Нет изменений для записи id: %s", request_dict['id'])
+            
             return ChangeResponse(id=request_dict['id'], changed_fields={})
 
         # 6. Обновление записи
@@ -970,12 +1066,16 @@ class UserBookingService:
             update_result = await db.execute(update_query)
             updated_id = update_result.fetchone()[0]
             if updated_id is None:
+                logger.warning("Запись не найдена или не обновлена для id: %s", request_dict['id'])
                 raise HTTPException(status_code=404,
                                     detail="Запись не найдена или не обновлена")
             await db.commit()
+            logger.info("Запись успешно обновлена для id: %s", updated_id)
+            
             return ChangeResponse(id=updated_id, changed_fields=changes)
         except Exception as e:
             await db.rollback()
+            logger.error("Ошибка при обновлении записи: %s", e)
             raise HTTPException(status_code=500,
                                 detail=f"Ошибка при обновлении записи: {e}")
 
@@ -1005,15 +1105,20 @@ class UserBookingService:
         result = await db.execute(query)
         row = result.fetchone()
         if not row:
+            logger.warning("Запись не найдена для id: %s", request_dict['id'])
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         (project_id, date_booking, analyse_id, equipment_id
          , executor_id, count_analyses, status, comment) = row
 
         if not user.is_staff and status != 'На рассмотрении':
+            logger.warning("Удаление запрещено для пользователя: %s", user.username)
+            
             raise HTTPException(status_code=403, detail="Удаление запрещено")
 
         if user.is_staff and status == 'Оценить':
+            logger.warning("Удаление запрещено для пользователя: %s", user.username)
+            
             raise HTTPException(status_code=403, detail="Удаление запрещено")
 
         else:
@@ -1027,12 +1132,18 @@ class UserBookingService:
                 delete_result = await db.execute(update_query)
                 deleted_id = delete_result.fetchone()[0]
                 if not deleted_id:
+                    logger.warning("Запись не найдена или не обновлена для id: %s", request_dict['id'])
+                
                     raise HTTPException(status_code=404,
                                         detail="Запись не найдена или не обновлена")
                 await db.commit()
+                logger.info("Запись успешно удалена для id: %s", deleted_id)
+            
                 return CancelResponse(id=deleted_id, data="Запись успешно удалена")
             except Exception as e:
                 await db.rollback()
+                logger.error("Ошибка при обновлении записи: %s", e)
+            
                 raise HTTPException(status_code=500,
                                     detail=f"Ошибка при обновлении записи: {e}")
 
@@ -1056,16 +1167,20 @@ class UserBookingService:
 
         result = await db.execute(query)
         row = result.fetchone()
-        print(user.is_staff)
-        print('request_dict')
-        print(request_dict)
+    
         if not row:
+            logger.warning("Запись не найдена для id: %s", request_dict['id'])
+            
             raise HTTPException(status_code=404, detail="Запись не найдена")
 
         if user.is_staff :
+            logger.warning("Только пользователь может прислать ответы")
+            
             raise HTTPException(status_code=403, detail="Только пользователь может прислать ответы")
 
         if row[6] != 'Оценить':
+            logger.warning("Задача не в статусе \"Оценить\" для id: %s", request_dict['id'])
+            
             raise HTTPException(status_code=403, detail="Задача не в статусе \"Оценить\"")
 
         else:
@@ -1086,13 +1201,15 @@ class UserBookingService:
                 deleted_id = delete_result.fetchone()[0]
                 insert_result = await db.execute(insert_query)
                 insert_id = insert_result.fetchone()
-                print(insert_id)
+                logger.info("Обратная связь успешно добавлена для id: %s", deleted_id)
                 if not deleted_id:
+                    logger.warning("Запись не найдена или не обновлена для id: %s", request_dict['id'])
                     raise HTTPException(status_code=404,
                                         detail="Запись не найдена или не обновлена")
                 await db.commit()
                 return FeedbackResponse(id=deleted_id, data="Запись успешно добавлена")
             except Exception as e:
                 await db.rollback()
+                logger.error("Ошибка при обновлении записи: %s", e)
                 raise HTTPException(status_code=500,
                                     detail=f"Ошибка при обновлении записи: {e}")

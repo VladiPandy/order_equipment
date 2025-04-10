@@ -1,17 +1,17 @@
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-class InfoProjectResponse(BaseModel):
+class BaseInfoResponse(BaseModel):
     is_admin: int
     project_name: str
     responsible_fio: str
     is_open: int
 
-class InfoListsRequest(BaseModel):
-    start: Optional[str] = None  # Поле start может быть строкой или отсутствовать
+class BaseInfoRequest(BaseModel):
+    start: Optional[str] = None
     end: Optional[str] = None
 
-class InfoListsResponse(BaseModel):
+class BaseInfoListsResponse(BaseModel):
     project: List
     date: List
     analyse: List
@@ -19,10 +19,10 @@ class InfoListsResponse(BaseModel):
     executor: List
     status: List
 
-class InfoBookingItem(BaseModel):
+class BaseInfoItem(BaseModel):
     id: int
     project: str
-    date: str  # Формат: "dd.mm.yyyy"
+    date: str
     analyse: str
     equipment: str
     executor: str
@@ -30,9 +30,7 @@ class InfoBookingItem(BaseModel):
     status: str
     comment: Optional[str] = ""
 
-
-class InfoExecutorTable(BaseModel):
-    executor: str
+class BaseTableRow(BaseModel):
     monday: Optional[str] = ""
     tuesday: Optional[str] = ""
     wednesday: Optional[str] = ""
@@ -41,10 +39,25 @@ class InfoExecutorTable(BaseModel):
     saturday: Optional[str] = ""
     sunday: Optional[str] = ""
 
-class InfoEquipmentTable(BaseModel):
+class InfoProjectResponse(BaseInfoResponse):
+    pass
+
+class InfoListsRequest(BaseInfoRequest):
+    pass
+
+class InfoListsResponse(BaseInfoListsResponse):
+    pass
+
+class InfoBookingItem(BaseInfoItem):
+    pass
+
+class InfoExecutorTable(BaseTableRow):
+    executor: str
+
+class InfoEquipmentTable(BaseTableRow):
     equipment: str
     monday: str
-    tuesday: str  # Формат: "dd.mm.yyyy"
+    tuesday: str
     wednesday: str
     thursday: str
     friday: str

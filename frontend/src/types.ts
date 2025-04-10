@@ -30,21 +30,15 @@ export type Filters = {
     status: string[]
 }
 
-// export type FilterBodyType = {
-//     [key in KeyType]?: string
-// }
-
 export type SimpleValueChangeType = (value: string | number) => void
 
 export type FilterChangeType = (value: string[] | string, type: KeyType) => void
 
 export type OptionsType = {
-    date: {[key: string]: boolean}
-    analyse: string[]
-    equipment: string[]
-    executor: string[]
+    [key: string]: string[] | number | {[key: string]: 0 | 1 | 2}
     samples_limit: number
     used: number
+    date: {[key: string]: 0 | 1 | 2}
 }
 
 
@@ -92,4 +86,21 @@ export type Booking = {
     samples: number
     status: string
     comment?: string
+}
+
+interface BaseInfo {
+    monday: string
+    tuesday: string
+    wednesday: string
+    thursday: string
+    friday: string
+    saturday: string
+    sunday: string
+}
+
+export interface EquipmentInfo extends BaseInfo {
+    equipment: string
+}
+export interface ExecutorInfo extends BaseInfo {
+    executor: string
 }

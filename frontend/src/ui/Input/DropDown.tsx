@@ -13,6 +13,7 @@ interface DropDownProps {
     children?: JSX.Element
     onChange: (atr: string[], type: KeyType) => void
     isMultiple?: boolean
+    enabled?: boolean
 }
 
 const DropDown: React.FC<DropDownProps> = ({
@@ -22,7 +23,8 @@ const DropDown: React.FC<DropDownProps> = ({
     filter,
     children,
     onChange,
-    isMultiple = true
+    isMultiple = true,
+    enabled
 }) => {
     const [selected, setSelected] = useState<string[]>(value)
     const [isOpen, setIsOpen] = useState(false)
@@ -68,6 +70,7 @@ const DropDown: React.FC<DropDownProps> = ({
     }
 
     const handleToggle = (e: React.MouseEvent) => {
+        if (!enabled) return
         e.stopPropagation()
         setIsOpen(prev => !prev)
     }
@@ -105,7 +108,7 @@ const DropDown: React.FC<DropDownProps> = ({
     }
 
     return (
-        <div className={`select-element ${isOpen ? 'active' : ''}`}>
+        <div className={`select-element ${isOpen ? 'active' : ''} ${!enabled ? 'disabled' : ''}`}>
             {children}
             <Arrow className='shevron' />
             <input

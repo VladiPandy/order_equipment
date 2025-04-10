@@ -1,22 +1,49 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useContext, useEffect } from 'react'
 
-import { DataType } from '../../types'
 import './style.scss'
 
-import { EmployeesData } from './Data'
+import { InfoContext } from '../../features/infoProvider'
+import { FiltersContext } from '../../features/filtersProvider'
+import { addSpacesBeforeCapitals } from '../../utils/formatString'
+import { Loader } from '../../ui/Loader'
+import { FilteredDataContext } from '../../features/filteredDataProvider'
 
 const headers = ['Оператор', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
 const EmployeesTable: FC = () => {
-    const [data, handleDataChange] = useState<DataType[]>([]);
+    const { getFilters, filters, getFilterBody } = useContext(FiltersContext)
+    const { getExecutors, loading } = useContext(InfoContext)
+
+    const {
+        filteredExecutors: executors,
+        filterExecutors
+    } = useContext(FilteredDataContext)
 
     useEffect(() => {
-        //fetch data
-        handleDataChange(EmployeesData)
+        getFilters()
+        getExecutors(getFilterBody())
+        const timer = setInterval(() => {
+            getFilters()
+            getExecutors(getFilterBody())
+        }, 1000 * 60 * 10)
+        return () => clearInterval(timer)
+    }, [])
+
+    useEffect(() => {
+        if (loading) {
+            getExecutors(getFilterBody())
+        }
+
+        filterExecutors(filters)
+    }, [filters])
+
+    useEffect(() => {
+        getExecutors(getFilterBody())
     }, [])
 
     return (
         <div className="AdminPageTable">
+            {loading ? <Loader/> : 
             <table>
                 <thead>
                     <tr>
@@ -26,11 +53,11 @@ const EmployeesTable: FC = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((line, index) => {
+                    {executors.map((line, index) => {
                         const {executor, monday, tuesday, wednesday, thursday, friday, saturday, sunday} = line
                         return (
                             <tr key={index}>
-                                <td>{executor}</td>
+                                <td>{addSpacesBeforeCapitals(executor || '')}</td>
                                 <td className={`${!monday ? 'empty' : ''}`}>{monday}</td>
                                 <td className={`${!tuesday ? 'empty' : ''}`}>{tuesday}</td>
                                 <td className={`${!wednesday ? 'empty' : ''}`}>{wednesday}</td>
@@ -43,6 +70,7 @@ const EmployeesTable: FC = () => {
                     })}
                 </tbody>
             </table>
+            }
         </div>
     )
 }

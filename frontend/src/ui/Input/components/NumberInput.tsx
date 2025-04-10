@@ -1,6 +1,7 @@
-import { FC, ChangeEvent, useEffect, useState } from 'react'
+import { FC, ChangeEvent, useState, useEffect } from 'react'
 import { NumberInputProps } from '../types'
-import { useThrottle } from '../../../hooks/useThrottle'
+
+import '../style.scss'
 
 export const NumberInput: FC<NumberInputProps> = ({
     placeholder,
@@ -9,24 +10,24 @@ export const NumberInput: FC<NumberInputProps> = ({
     max
 }) => {
     const [inputValue, setInputValue] = useState<number | undefined>(value)
-    
-    const throttledChange = useThrottle(() => setValue(Number(inputValue)))
+    const [isCorrect, setIsCorrect] = useState<boolean>(Number(max) >= Number(value || 0))
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setInputValue(Number(e.target.value))
+        const newIsCorrect = Number(max) >= Number(e.target.value)
+        if (newIsCorrect) setInputValue(Number(e.target.value))
+        setIsCorrect(newIsCorrect)
     }
-    
-    useEffect(() => throttledChange(), [inputValue])
-    
 
+    useEffect(() => setValue(Number(inputValue)), [inputValue])
+    
     return (
         <input 
+            className={`${!isCorrect ? 'blocked' : ''}`}
             type="number"
-            value={inputValue}
+            value={inputValue || ''}
             onChange={handleChange}
             placeholder={placeholder}
             max={max}
-            disabled={!max || max <= 0}
             min={1}
         />
     )

@@ -20,3 +20,4 @@ split-settings==1.0.0
 requests==2.31.0
 gunicorn==20.1.0
 django-modeladmin-reorder==0.3.1
+python-json-logger==2.0.7

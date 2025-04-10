@@ -1,19 +1,13 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useContext } from 'react'
 
-import { DataType } from '../../types'
 import './style.scss'
 
-import { TotalData } from './Data'
+import { FilteredDataContext } from '../../features/filteredDataProvider'
 
 const headers = ['Организация', 'Дата бронирования', 'Прибор', 'Анализ', 'Оператор', 'Число образцов']
 
 const TotalTable: FC = () => {
-    const [data, handleDataChange] = useState<DataType[]>([]);
-
-    useEffect(() => {
-        //fetch data
-        handleDataChange(TotalData)
-    }, [])
+    const {filteredBooking} = useContext(FilteredDataContext)
 
     return (
         <div className="AdminPageTable">
@@ -26,16 +20,16 @@ const TotalTable: FC = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((line, index) => {
-                        const {organization, date, item, analyze, executor, sample} = line
+                    {filteredBooking.map((line, index) => {
+                        const {project, date, equipment, analyse, executor, samples} = line
                         return (
                             <tr key={index}>
-                                <td>{organization}</td>
+                                <td>{project}</td>
                                 <td>{date}</td>
-                                <td>{item}</td>
-                                <td>{analyze?.join(', ')}</td>
+                                <td>{equipment}</td>
+                                <td>{analyse}</td>
                                 <td>{executor}</td>
-                                <td>{sample}</td>
+                                <td>{samples}</td>
                             </tr>
                         )
                     })}

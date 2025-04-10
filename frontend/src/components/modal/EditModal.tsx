@@ -45,7 +45,7 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
             }
             globalPost(endPoints.checkEditBooking, prepareFilterData, body)
         }
-    }, [loading, date, analyze, item, executor, count])
+    }, [loading, date, analyze, item, executor])
 
     const prepareFilterData = (data: FilterBodyType) => {
         setLoading(false)
@@ -112,7 +112,15 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
         } else if (readyToSubmit) {
             setReadyToSubmit(false)
         }
-    }, [analyze, date, item, executor, count, readyToSubmit])
+    }, [analyze, date, item, executor, readyToSubmit])
+
+    useEffect(() => {
+        if (analyze && date && item && executor && count >= 0) {
+            setReadyToSubmit(true)
+        } else if (readyToSubmit) {
+            setReadyToSubmit(false)
+        }
+    }, [count])
 
     const handleDateChange = (value: string | undefined) => {
         setDate(value || '')
@@ -168,7 +176,7 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
                     options={Statuses} 
                     title={'Статус'} 
                     isRequired={true}
-                    value={[editingEntry.status]}
+                    value={[status]}
                     setValue={handleChangeField}
                     type='dropDown'
                     filter='status'
@@ -176,7 +184,7 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
                 />
                 <Input 
                     placeholder={`Количество (макс. ${options?.samples_limit})`} 
-                    title={'Количество'} 
+                    title={`Количество (макс. ${options?.samples_limit})`} 
                     value={count} 
                     isRequired={true} 
                     setValue={(value) => setCount(Number(value))} 

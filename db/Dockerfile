@@ -18,5 +18,16 @@ RUN git clone https://github.com/citusdata/pg_cron.git \
 RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample \
     && echo "cron.database_name = 'DB_NAME'" >> /usr/share/postgresql/postgresql.conf.sample
 
+# Копируем скрипты
 COPY create_schema.sql /docker-entrypoint-initdb.d/create_schema.sql
+COPY init_backup.sql /docker-entrypoint-initdb.d/init_backup.sql
+COPY backup.sh /var/lib/postgresql/backup.sh
+COPY restore.sh /docker-entrypoint-initdb.d/restore.sh
+
+# Устанавливаем права на скрипты
+RUN chmod +x /var/lib/postgresql/backup.sh \
+    && chmod +x /docker-entrypoint-initdb.d/restore.sh \
+    && mkdir -p /var/lib/postgresql/backups \
+    && chown -R postgres:postgres /var/lib/postgresql/backups \
+    && chown postgres:postgres /var/lib/postgresql/backup.sh
 

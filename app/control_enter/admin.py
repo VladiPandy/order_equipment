@@ -27,8 +27,8 @@ class WorkingDayOfWeekAdmin(admin.ModelAdmin):
     #     """
     #     Проверяем, существует ли уже запись с таким week_period
     #     """
-    #     print('here')
-    #     print(WorkingDayOfWeek.objects.week_period.count())
+    #     ('here')
+    #     (WorkingDayOfWeek.objects.week_period.count())
     #     print(WorkingDayOfWeek.objects.filter(week_period=obj.week_period).exists())
     #     if WorkingDayOfWeek.objects.filter(week_period=obj.week_period).exists():
     #         raise ValidationError(f"Запись с периодом недели '{obj.week_period}' уже существует.")
