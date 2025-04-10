@@ -39,7 +39,7 @@ RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresq
     && chown postgres:postgres /var/log/postgresql/cron.log
 
 # Entrypoint скрипт
-COPY entrypoint.sh /
+COPY entrypoint.sh .
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
