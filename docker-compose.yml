@@ -40,13 +40,14 @@ services:
       - ./.env
     volumes:
       - web-static:/app/staticfiles
+      - ./app/logs/:/app/logs/
     depends_on:
       - db
 
   react_app:
     build:
       context: ./frontend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5173:5173"
     env_file:
