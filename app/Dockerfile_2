@@ -14,9 +14,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY entrypoint_2.sh .
 RUN sed -i 's/\r$//g' /app/entrypoint_2.sh
-RUN chmod +x ./entrypoint_2.sh
-
+RUN chmod +x /app/entrypoint_2.sh
 
 COPY . .
 
-ENTRYPOINT ["sh", "./entrypoint_2.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint_2.sh"]

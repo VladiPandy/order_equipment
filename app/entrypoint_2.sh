@@ -2,7 +2,7 @@
 
 # Загрузка переменных окружения
 set -a
-source /app/.env
+source /.env
 set +a
 
 echo "Waiting for postgres..."
