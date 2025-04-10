@@ -203,5 +203,5 @@ $$;
 
 
 COMMENT ON FUNCTION public.create_weekly_working_day_status IS 'Создает записи в таблице control_enter_workingdayofweek для недели через две недели от текущей даты, если они отсутствуют.';
-SELECT cron.schedule('create_weekly_worker_status', '10 0 * * 1', $$ SELECT public.create_weekly_worker_status(); $$);
+SELECT cron.schedule('create_weekly_working_day_status', '10 0 * * 1', $$ SELECT public.create_weekly_working_day_status(); $$);
 
