@@ -1,24 +1,25 @@
-FROM node:14-alpine
-
 FROM node:18-alpine
 
-WORKDIR '/app'
+# Устанавливаем рабочую директорию
+WORKDIR /frontend
 
-COPY ../frontend .
+# Копируем package.json и package-lock.json для установки зависимостей
+COPY package*.json ./
 
-RUN rm -rf node_modules package-lock.json
-
+# Устанавливаем зависимости
 RUN npm install
 
-RUN npm i typescript
+# Копируем остальные файлы приложения
+COPY . .
 
-RUN npm i typescript ts-node
+# Устанавливаем дополнительные пакеты
+RUN npm install --save-dev typescript ts-node
 
-
-RUN npm i #--save-dev @types/node
-
+# Устанавливаем права на выполнение для tsc
 RUN chmod +x ./node_modules/.bin/tsc
 
-EXPOSE 3000
+# Открываем порт
+EXPOSE 5173
 
+# Запускаем приложение
 CMD ["npm", "run", "dev"]
