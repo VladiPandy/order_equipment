@@ -1,8 +1,6 @@
 FROM postgres:15
 
 # Установка необходимых пакетов для сборки pg_cron
-# Установка необходимых пакетов
-USER root
 RUN apt-get update && apt-get install -y \
     postgresql-server-dev-15 \
     make \
@@ -40,11 +38,8 @@ RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresq
     && touch /var/log/postgresql/cron.log \
     && chown postgres:postgres /var/log/postgresql/cron.log
 
-# Возвращаем пользователя postgres
-USER postgres
-
 # Entrypoint скрипт
-COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
