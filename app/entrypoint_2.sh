@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Загрузка переменных окружения
-set -a
-source /.env
-set +a
+#set -a
+#source /.env
+#set +a
 
 echo "Waiting for postgres..."
 
