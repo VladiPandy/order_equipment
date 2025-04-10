@@ -1,21 +1,55 @@
--- Создаем функцию для выполнения бэкапа
-CREATE OR REPLACE FUNCTION perform_backup()
-RETURNS void AS $$
-BEGIN
-    -- Выполняем скрипт бэкапа
-    PERFORM dblink_exec('dbname=' || current_database(), 
-        '\! /var/lib/postgresql/backup.sh');
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Настраиваем периодическое выполнение бэкапа
--- Бэкап будет выполняться каждый день в 2:00
-SELECT cron.schedule('0 2 * * *', 'SELECT perform_backup()');
-
--- Создаем таблицу для хранения информации о бэкапах
-CREATE TABLE IF NOT EXISTS backup_history (
-    id SERIAL PRIMARY KEY,
-    backup_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    backup_file TEXT,
-    status TEXT
-); 
+-- -- Создаем функцию для выполнения бэкапа
+-- CREATE EXTENSION dblink;
+--
+-- CREATE OR REPLACE FUNCTION perform_backup()
+-- RETURNS void AS $$
+-- BEGIN
+--     -- Выполняем скрипт бэкапа
+--     PERFORM dblink_exec('dbname=' || -- Создаем функцию для выполнения бэкапа с параметрами из env
+-- CREATE EXTENSION IF NOT EXISTS dblink;
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+--
+-- CREATE OR REPLACE FUNCTION perform_backup()
+-- RETURNS void AS $$
+-- DECLARE
+--     db_host TEXT := current_setting('app.db_host');
+--     db_user TEXT := current_setting('app.db_user');
+--     db_pass TEXT := current_setting('app.db_pass');
+-- BEGIN
+--     -- Логируем начало бэкапа
+--     INSERT INTO backup_history (status) VALUES ('started');
+--
+--     -- Выполняем скрипт бэкапа
+--     PERFORM dblink_exec(
+--         format('host=%s dbname=%s user=%s password=%s',
+--                db_host,
+--                current_database(),
+--                db_user,
+--                db_pass),
+--         '\! /var/lib/postgresql/backup.sh'
+--     );
+--
+--     -- Логируем успешное завершение
+--     INSERT INTO backup_history (status, backup_file)
+--     VALUES ('completed', 'backup_' || to_char(now(), 'YYYY-MM-DD_HH24-MI-SS') || '.sql');
+-- EXCEPTION WHEN OTHERS THEN
+--     -- Логируем ошибку
+--     INSERT INTO backup_history (status) VALUES ('failed: ' || SQLERRM);
+--     RAISE;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;,
+--         '\! /var/lib/postgresql/backup.sh');
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- -- Настраиваем периодическое выполнение бэкапа
+-- -- Бэкап будет выполняться каждый день в 2:00
+-- SELECT cron.schedule('0 2 * * *', 'SELECT perform_backup()');
+--
+-- -- Создаем таблицу для хранения информации о бэкапах
+-- CREATE TABLE IF NOT EXISTS backup_history (
+--     id SERIAL PRIMARY KEY,
+--     backup_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--     backup_file TEXT,
+--     status TEXT
+-- );

@@ -31,3 +31,15 @@ RUN chmod +x /var/lib/postgresql/backup.sh \
     && chown -R postgres:postgres /var/lib/postgresql/backups \
     && chown postgres:postgres /var/lib/postgresql/backup.sh
 
+# Настройка cron для ежедневного бэкапа в 2:00
+RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresql/cron.log 2>&1" > /etc/cron.d/postgres-backup \
+    && chmod 0644 /etc/cron.d/postgres-backup \
+    && touch /var/log/postgresql/cron.log \
+    && chown postgres:postgres /var/log/postgresql/cron.log
+
+
+# Entrypoint скрипт
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
