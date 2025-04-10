@@ -1,7 +1,7 @@
 #!/bin/bash
-set -a
-source ../.env # Укажите правильный путь к вашему .env файлу
-set +a
+#set -a
+#source ../.env # Укажите правильный путь к вашему .env файлу
+#set +a
 
 # Настройки
 BACKUP_DIR="/var/lib/postgresql/backups"

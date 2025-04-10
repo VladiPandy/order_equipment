@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
+    env_file:
+      - ./.env
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
