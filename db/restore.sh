@@ -1,9 +1,10 @@
 #!/bin/bash
+set -a
+source ../.env # Укажите правильный путь к вашему .env файлу
+set +a
 
 # Настройки
 BACKUP_DIR="/var/lib/postgresql/backups"
-DB_NAME="DB_NAME"
-DB_USER="postgres"
 LOG_FILE="/var/log/postgresql/restore.log"
 
 # Функция для логирования

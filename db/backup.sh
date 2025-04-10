@@ -1,9 +1,10 @@
 #!/bin/bash
+set -a
+source ../.env # Укажите правильный путь к вашему .env файлу
+set +a
 
 # Настройки
 BACKUP_DIR="/var/lib/postgresql/backups"
-DB_NAME="DB_NAME"
-DB_USER="postgres"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/${DB_NAME}_${TIMESTAMP}.sql.gz"
 
