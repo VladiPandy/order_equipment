@@ -40,4 +40,4 @@ RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresq
 
 
 
-CMD ["sh", "-c", "cron && docker-entrypoint-initdb.d/restore.sh && docker-entrypoint.sh postgres"]
+CMD ["sh", "-c", "service cron start && docker-entrypoint-initdb.d/restore.sh && docker-entrypoint.sh postgres"]
