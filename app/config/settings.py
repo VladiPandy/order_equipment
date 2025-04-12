@@ -116,12 +116,12 @@ ADMIN_REORDER = (
         'label': 'Базовые настройки'
     },
     {
-        'app': 'control_enter',
-        'label': 'Настройки доступа системы'
-    },
-    {
         'app': 'dependings',
         'label': 'Настройка взаимосвязей'
+    },
+    {
+        'app': 'control_enter',
+        'label': 'Настройки доступа системы'
     }
 )
 

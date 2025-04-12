@@ -310,7 +310,8 @@ class UserBookingService:
     async def availible_values(db: AsyncSession,
                                      uuids_json,
                                      date_booking_dict,
-                                     blocking_element
+                                     blocking_element,
+                                     filter_elem
                                 ) -> None:
         new_values_query = text(f"""
                              with limit_exec as
@@ -321,13 +322,20 @@ class UserBookingService:
                                             and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
                                 )
                                 , limit_exec_per_day as (
-                                    select x.date_booking, x.executor_id, max(le.limit_executor) lim , count(1) cc
+                                    select x.date_booking, x.executor_id, max(le.limit_executor) lim , count(distinct equipment_id) cc
                                     from projects_booking x
                                     left join limit_exec le on x.executor_id = le.executor_id
                                     where x.date_booking between '{date_booking_dict['date_start']}'::date 
                                                                             and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
                                     group by x.date_booking, x.executor_id
-                                    having  max(le.limit_executor) >= count(1)
+                                    having  max(le.limit_executor) <= count(distinct equipment_id)
+                                )
+                                , equip_exec_use as (
+                                	 select x.date_booking, x.executor_id, x.equipment_id
+							            from projects_booking x
+							        where x.date_booking between '{date_booking_dict['date_start']}'::date 
+                                                                            and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    group by x.date_booking, x.executor_id, x.equipment_id
                                 )
                                 ,days_employes as 
                                 (
@@ -498,12 +506,13 @@ class UserBookingService:
                             right join days_working dw on dw.d = EXTRACT(DOW from date::DATE)
                             right join days_employes de on de.d = EXTRACT(DOW from date::DATE) and de.executor_id = v.operator_id
                             left join limit_exec_per_day led on date::DATE = led.date_booking and ex.id = led.executor_id
+                            left join equip_exec_use led_ex on date::DATE = led_ex.date_booking and ex.id = led_ex.executor_id and led_ex.equipment_id  = v.equipment_id
                     where status = 'active' 
                         {blocking_element} and y.id = '{uuids_json['user_id']}'  
                         and bl.id is null 
-                            and (coalesce(z.count_samples,0) - coalesce(ul_per_day.used_limit,0)) > 0
+                            and (coalesce(z.count_samples,0) - coalesce(ul_per_day.used_limit,0)) {filter_elem} 0
                             and (coalesce(x.limit_samples,0) - coalesce(ul.used_limit,0)) > 0
-                            and led.executor_id is null
+                            and (led.executor_id is null or led_ex.equipment_id is not null)
                         and {uuids_json['date_text']}
                         and {uuids_json['analyze_val']}
                         and {uuids_json['equipment_val']}
@@ -522,7 +531,27 @@ class UserBookingService:
         block_dates = await db.execute(text(block_date))
         list_block_values = block_dates.fetchall()
         logger.debug("Заблокированные даты: %s", list_block_values)
-        return list_availible_values, list_block_values
+
+        limit_samples = f"""
+                        with total_use as (
+                            select analyse_id ,sum(count_analyses) used_limit
+                            from projects_booking
+                            where {blocking_element} project_id = '{uuids_json['user_id']}' and
+                                date_booking between '{date_booking_dict['date_start']}'::date 
+                                and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                            group by analyse_id    
+                        )          
+                        select sum(coalesce(x.limit_samples,0)) - sum(coalesce(y.used_limit,0)) sum_total
+                        from dependings_projectperanalyze x
+                        left join total_use y on x.analazy_n_id = y.analyse_id
+                        {blocking_element}  where x.project_n_id = '{uuids_json['user_id']}'
+                            """
+        limit_sample = await db.execute(text(limit_samples))
+        limit_sample_value = limit_sample.fetchone()
+
+        logger.debug(f"Общее ограничение для {uuids_json['user_id']}: %s", limit_sample_value)
+
+        return list_availible_values, list_block_values, limit_sample_value[0]
 
     @staticmethod
     async def get_period(
@@ -540,8 +569,14 @@ class UserBookingService:
         is_open_global = await db.execute(text(
             f"""SELECT week_period  FROM \"control_enter_openwindowforordering\" 
                         WHERE start_date = '{date_str}'
-                        and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) and for_priority = {items[0][2]}
-                        ;"""))
+                        and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) 
+                        and  (for_priority = {items[0][2]} 
+                        or for_priority = 
+                        CASE 
+                            WHEN {items[0][2]} = True THEN False
+                            ELSE False
+                        END)
+            ;"""))
         is_open_items = is_open_global.fetchall()
         logger.debug("Статус открытия глобального окна: %s", is_open_items)
         if not is_open_items:
@@ -616,10 +651,11 @@ class UserBookingService:
             raise HTTPException(status_code=403, detail="Заполнение запрещено")
 
         await UserBookingService.update_blocking_period(db, uuids_json, cookie_createkey)
-        list_availible_values, list_block_values = await UserBookingService.availible_values(db,
+        list_availible_values, list_block_values, limit_sample_value = await UserBookingService.availible_values(db,
                                             uuids_json,
                                             date_booking_dict,
-                                            ''
+                                            '',
+                                            '>'
                                             )
 
         if not list_availible_values:
@@ -655,7 +691,7 @@ class UserBookingService:
                     for elem in date_booking_dict['dates_list']:
                         if bl_date == elem and date_json[elem] == 1:
                             date_json[elem] += 1
-                    samples_list.append(val[7])
+                    samples_list.append(val[8])
                     samples_used.append(val[9])
                     samples_per_day.append(val[-2])
                     samples_used_per_day.append(val[-3])
@@ -670,7 +706,7 @@ class UserBookingService:
                 analyze_json[val[12]] = str(val[3])
                 equipment_json[val[13]] = str(val[4])
                 executor_json[val[14]] = str(val[6])
-                samples_list.append(val[7])
+                samples_list.append(val[8])
                 samples_used.append(val[9])
                 samples_per_day.append(val[-2])
                 samples_used_per_day.append(val[-3])
@@ -680,7 +716,7 @@ class UserBookingService:
         const_samples_limit_per_day = max(map(int,list(set(samples_per_day))))
         const_samples_used_per_day = max(map(int, list(set(samples_used_per_day))))
 
-        samples_limit = const_samples_limit if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
+        samples_limit = limit_sample_value if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
         samples_used = const_samples_used if len(list(set(dates_list))) > 1 else const_samples_used_per_day
 
         if (const_samples_limit - const_samples_used) <= 0:
@@ -873,11 +909,12 @@ class UserBookingService:
 
         logger.debug("UUIDs для изменения: %s", uuids_json)
 
-        list_availible_values,list_block_values \
+        list_availible_values,list_block_values, limit_sample_value \
             = await UserBookingService.availible_values(db,
                   uuids_json,
                   date_booking_dict,
-                  '-----'
+                  '-----',
+                  '>='
                   )
 
         if not list_availible_values:
@@ -912,7 +949,7 @@ class UserBookingService:
             equipment_json[val[13]] = str(val[4])
             executor_json[val[14]] = str(val[6])
 
-            samples_list.append(val[7])
+            samples_list.append(val[8])
             samples_used.append(val[9])
             samples_per_day.append(val[-2])
             samples_used_per_day.append(val[-3])

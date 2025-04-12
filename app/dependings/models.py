@@ -30,6 +30,10 @@ class OperatorPerEquipment(models.Model):
                 f"Оператор {self.operator} уже связан с оборудованием {self.equipment}."
             )
 
+    class Meta:
+        verbose_name = 'Исполнитель/Прибор'
+        verbose_name_plural = 'Исполнители/Приборы'
+
     def save(self, *args, **kwargs):
         self.full_clean()  # Вызов clean() перед сохранением
         super().save(*args, **kwargs)
@@ -49,8 +53,8 @@ class AnalyzePerEquipment(models.Model):
                                            MaxValueValidator(100)])
 
     class Meta:
-        verbose_name = 'Анализы по оборудованию'
-        verbose_name_plural = 'Анализы по оборудованию'
+        verbose_name = 'Анализы/Прибор'
+        verbose_name_plural = 'Анализы/Приборы'
 
     def clean(self) -> None:
         """
@@ -101,8 +105,8 @@ class ProjectPerAnalyze(models.Model):
         super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = 'Проект Анализу'
-        verbose_name_plural = 'Проекты Анализам'
+        verbose_name = 'Анализ/Проект'
+        verbose_name_plural = 'Анализы/Проекты'
 
     def __str__(self):
         return f"{self.analazy_n} - {self.project_n}"
