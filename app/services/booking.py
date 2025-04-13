@@ -553,8 +553,10 @@ class UserBookingService:
                         )          
                         select sum(coalesce(x.limit_samples,0)) - sum(coalesce(y.used_limit,0)) sum_total
                         from dependings_projectperanalyze x
+                        left join "analyze" a on a.id = x.analazy_n_id
                         left join total_use y on x.analazy_n_id = y.analyse_id
                         {blocking_element}  where x.project_n_id = '{uuids_json['user_id']}'
+                        and {uuids_json['analyze_val']}
                         and coalesce(x.limit_samples,0) - coalesce(y.used_limit,0) >= 0
                             """
         limit_sample = await db.execute(text(limit_samples))
