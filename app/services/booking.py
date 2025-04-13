@@ -429,13 +429,21 @@ class UserBookingService:
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
                                     group by date_booking, equipment_id 
                                 )
-                                ,used_limits_analese_equipment as (
-                                    select analyse_id ,equipment_id ,sum(count_analyses) used_limit
+                                ,used_limits_equipment as (
+                                    select equipment_id ,sum(count_analyses) used_limit
                                     from projects_booking
                                     where {blocking_element} project_id = '{uuids_json['user_id']}' and
                                          date_booking between '{date_booking_dict['date_start']}'::date 
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
-                                    group by analyse_id ,equipment_id 
+                                    group by equipment_id 
+                                )
+                                ,used_limits_analese as (
+                                    select analyse_id ,sum(count_analyses) used_limit
+                                    from projects_booking
+                                    where {blocking_element} project_id = '{uuids_json['user_id']}' and
+                                         date_booking between '{date_booking_dict['date_start']}'::date 
+                                        and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                    group by analyse_id 
                                 )
                                   ,used_limits_analese_equipment_per_day as (
 		                                    select date_booking, analyse_id ,equipment_id ,sum(count_analyses) used_limit
@@ -464,7 +472,7 @@ class UserBookingService:
                                 , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) fio_x
                                 , x.limit_samples - coalesce(ul.used_limit,0) limit_samples
                                 , x.limit_samples limits_per_eq
-                                , coalesce(ul.used_limit,0)
+                                , coalesce(ul.used_limit,0) used_limit_anales
                                 , eql.count_equipment_per_day
                                 , exl.count_executor_per_day
                                 , z.analazy_id::text
@@ -497,7 +505,7 @@ class UserBookingService:
                                 when coalesce(bl.executor_id) is null  then  bl.date_booking = date::DATE and  bl.analyse_id = z.analazy_id and bl.equipment_id = v.equipment_id
                                 else bl.date_booking = date::DATE and  bl.analyse_id = z.analazy_id and bl.equipment_id = v.equipment_id and bl.executor_id = v.operator_id
                             end 
-                            left join used_limits_analese_equipment ul on ul.analyse_id = z.analazy_id and ul.equipment_id = v.equipment_id
+                            left join used_limits_analese ul on ul.analyse_id = z.analazy_id 
                             left join used_limits_analese_equipment_per_day ul_per_day on ul_per_day.analyse_id = z.analazy_id 
                             					and ul_per_day.equipment_id = v.equipment_id
                             					and ul_per_day.date_booking = date::DATE
@@ -534,17 +542,20 @@ class UserBookingService:
 
         limit_samples = f"""
                         with total_use as (
-                            select analyse_id ,sum(count_analyses) used_limit
-                            from projects_booking
-                            where {blocking_element} project_id = '{uuids_json['user_id']}' and
-                                date_booking between '{date_booking_dict['date_start']}'::date 
-                                and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                            select x.analyse_id ,sum(x.count_analyses) used_limit
+                            from projects_booking x
+                            left join "analyze" a on a.id = x.analyse_id
+                            where {blocking_element} x.project_id = '{uuids_json['user_id']}' and
+                                x.date_booking between '{date_booking_dict['date_start']}'::date 
+                                and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                and {uuids_json['analyze_val']}
                             group by analyse_id    
                         )          
                         select sum(coalesce(x.limit_samples,0)) - sum(coalesce(y.used_limit,0)) sum_total
                         from dependings_projectperanalyze x
-                        left join total_use y on x.analazy_n_id = y.analyse_id
+                        join total_use y on x.analazy_n_id = y.analyse_id
                         {blocking_element}  where x.project_n_id = '{uuids_json['user_id']}'
+                        and coalesce(x.limit_samples,0) - coalesce(y.used_limit,0) >= 0
                             """
         limit_sample = await db.execute(text(limit_samples))
         limit_sample_value = limit_sample.fetchone()
@@ -672,6 +683,8 @@ class UserBookingService:
         samples_per_day = []
         samples_used_per_day = []
         dates_list = []
+
+        analyse_list = []
         for val in list_availible_values:
             const_date = val[0].strftime('%d.%m.%Y')
             dates_list.append(const_date)
@@ -716,8 +729,13 @@ class UserBookingService:
         const_samples_limit_per_day = max(map(int,list(set(samples_per_day))))
         const_samples_used_per_day = max(map(int, list(set(samples_used_per_day))))
 
+        print('const_samples_limit')
+        print(samples_list)
+        print(samples_used)
+
         samples_limit = limit_sample_value if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
         samples_used = const_samples_used if len(list(set(dates_list))) > 1 else const_samples_used_per_day
+
 
         if limit_sample_value <= 0:
             logger.warning("Достигнут недельный лимит")
@@ -933,10 +951,10 @@ class UserBookingService:
         samples_per_day = []
         samples_used_per_day = []
         dates_list = []
-
+        date_used = []
         for val in list_availible_values:
 
-            const_date = val[0].strftime('%d.%m.%Y')
+            const_date = row[1].strftime('%d.%m.%Y')
 
             for elem in date_booking_dict['dates_list']:
                 if elem in date_json and  elem == const_date:
@@ -961,7 +979,9 @@ class UserBookingService:
         const_samples_used_per_day = max(
             map(int, list(set(samples_used_per_day))))
 
-
+        print(date_booking_dict['dates_list'])
+        print(booking_info['date_info'])
+        print(row[1].strftime('%d.%m.%Y'))
         if limit_sample_value < 0:
             raise HTTPException(status_code=403,
                                 detail="Достигнут недельный лимит")
@@ -982,7 +1002,7 @@ class UserBookingService:
                     analyse=analyze_json,
                     equipment=equipment_json,
                     executor=executor_json,
-                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]),
+                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]) + int(row[-3]),
                     samples_used = const_samples_used_per_day,
                     status={
                                 # '0': 'Не выбран',
