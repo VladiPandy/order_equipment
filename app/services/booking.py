@@ -511,7 +511,7 @@ class UserBookingService:
                         {blocking_element} and y.id = '{uuids_json['user_id']}'  
                         and bl.id is null 
                             and (coalesce(z.count_samples,0) - coalesce(ul_per_day.used_limit,0)) {filter_elem} 0
-                            and (coalesce(x.limit_samples,0) - coalesce(ul.used_limit,0)) > 0
+                            and (coalesce(x.limit_samples,0) - coalesce(ul.used_limit,0))  {filter_elem} 0
                             and (led.executor_id is null or led_ex.equipment_id is not null)
                         and {uuids_json['date_text']}
                         and {uuids_json['analyze_val']}
@@ -962,7 +962,7 @@ class UserBookingService:
             map(int, list(set(samples_used_per_day))))
 
 
-        if (const_samples_limit - const_samples_used) <= 0:
+        if limit_sample_value < 0:
             raise HTTPException(status_code=403,
                                 detail="Достигнут недельный лимит")
 
