@@ -719,7 +719,7 @@ class UserBookingService:
         samples_limit = limit_sample_value if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
         samples_used = const_samples_used if len(list(set(dates_list))) > 1 else const_samples_used_per_day
 
-        if (const_samples_limit - const_samples_used) <= 0:
+        if limit_sample_value <= 0:
             logger.warning("Достигнут недельный лимит")
             raise HTTPException(status_code=403,
                                 detail="Достигнут недельный лимит")
