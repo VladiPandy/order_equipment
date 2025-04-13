@@ -729,7 +729,7 @@ class UserBookingService:
             analyse=analyze_json,
             equipment=equipment_json,
             executor=executor_json,
-            samples_limit=samples_limit,
+            samples_limit=min([samples_limit,limit_sample_value]),
             used=samples_used
         )
 
@@ -982,7 +982,7 @@ class UserBookingService:
                     analyse=analyze_json,
                     equipment=equipment_json,
                     executor=executor_json,
-                    samples_limit=const_samples_limit_per_day,
+                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]),
                     samples_used = const_samples_used_per_day,
                     status={
                                 # '0': 'Не выбран',
