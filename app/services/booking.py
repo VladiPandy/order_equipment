@@ -555,7 +555,7 @@ class UserBookingService:
                         from dependings_projectperanalyze x
                         left join total_use y on x.analazy_n_id = y.analyse_id
                         {blocking_element}  where x.project_n_id = '{uuids_json['user_id']}'
-                        and coalesce(x.limit_samples,0) - coalesce(y.used_limit,0) >= 0)
+                        and coalesce(x.limit_samples,0) - coalesce(y.used_limit,0) >= 0
                             """
         limit_sample = await db.execute(text(limit_samples))
         limit_sample_value = limit_sample.fetchone()
