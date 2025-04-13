@@ -303,7 +303,11 @@ PROJECT_INFO_QUERY = """
 OPEN_GLOBAL_WINDOW_QUERY = """
     SELECT id  FROM \"control_enter_openwindowforordering\" 
     WHERE start_date = '{date_str}'
-    and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) and for_priority = {is_priority}
+    and CAST('{time_str}' AS time) between CAST(start_time AS time) and CAST(end_time AS time) and (for_priority = {is_priority} or for_priority = 
+                        CASE 
+                            WHEN {is_priority} = True THEN False
+                            ELSE False
+                        END)
     ;
 """
 
