@@ -224,7 +224,7 @@ class Adminstrator(UUIDMixin, TimeStampedMixin):
 
 
 @receiver(pre_save, sender=Adminstrator)
-def update_project_username(sender, instance, **kwargs):
+def update_adminstrator_username(sender, instance, **kwargs):
     """
     При обновлении проекта проверяет, изменилось ли имя проекта.
     Если да, пытается найти пользователя с предыдущим именем и обновляет его username.
@@ -235,15 +235,22 @@ def update_project_username(sender, instance, **kwargs):
         except Adminstrator.DoesNotExist:
             return
 
-        user = User.objects.get(username=instance.admin_nick)
-        # Проверка изменения имени проекта (project_nick)
+            # Получаем пользователя по старому имени
+        try:
+            user = User.objects.get(username=old_instance.admin_nick)
+        except User.DoesNotExist:
+            # Если пользователь не найден, ничего не делаем
+            return
+
+            # Проверка изменения имени администратора (admin_nick)
         if old_instance.admin_nick != instance.admin_nick:
-            try:
-                user.username = instance.admin_nick
-                user.save()
-            except ObjectDoesNotExist:
-                # Если пользователь не найден, ничего не делаем.
-                pass
+            # Проверяем, существует ли уже пользователь с новым именем
+            if User.objects.filter(username=instance.admin_nick).exists():
+                raise ValidationError(
+                    f"Имя администратора {instance.admin_nick} уже занято.")
+            # Переименовываем пользователя
+            user.username = instance.admin_nick
+            user.save()  # Сохраняем изменения
 
         # Проверка изменения пароля проекта (project_password)
         if old_instance.admin_password != instance.admin_password:
@@ -258,8 +265,18 @@ def update_project_username(sender, instance, **kwargs):
         user.is_superuser = True
         user.save()
 
+        # if old_instance.is_admin:
+        #     user.is_staff = True
+        #     user.is_superuser = True
+        #     user.save()
+        #
+        # if not old_instance.is_admin:
+        #     user.is_staff = False
+        #     user.is_superuser = False
+        #     user.save()
+
 @receiver(post_save, sender=Adminstrator)
-def create_user_for_project(sender, instance: Adminstrator, created: bool, **kwargs) -> None:
+def create_user_for_adminstrator(sender, instance: Adminstrator, created: bool, **kwargs) -> None:
     """
     После создания проекта:
     - Создаёт пользователя с именем, равным project_name, и указанным паролем.
@@ -276,7 +293,7 @@ def create_user_for_project(sender, instance: Adminstrator, created: bool, **kwa
         new_user.save()
 
 @receiver(post_delete, sender=Adminstrator)
-def delete_project_user(sender, instance, **kwargs):
+def delete_adminstrator_user(sender, instance, **kwargs):
     """
     После удаления проекта:
       - Удаляем пользователя, ассоциированного с проектом (по username, равному project_nick).
@@ -286,6 +303,7 @@ def delete_project_user(sender, instance, **kwargs):
         user.delete()
     except User.DoesNotExist:
         pass
+
 
 # Модель Проекта
 class Project(UUIDMixin, TimeStampedMixin):
@@ -352,15 +370,23 @@ def update_project_username(sender, instance, **kwargs):
         except Project.DoesNotExist:
             return
 
-        user = User.objects.get(username=instance.project_nick)
-        # Проверка изменения имени проекта (project_nick)
+            # Получаем пользователя по старому имени
+        try:
+            user = User.objects.get(username=old_instance.project_nick)
+        except User.DoesNotExist:
+            # Если пользователь не найден, ничего не делаем
+            return
+
+            # Проверка изменения имени администратора (admin_nick)
         if old_instance.project_nick != instance.project_nick:
-            try:
-                user.username = instance.project_nick
-                user.save()
-            except ObjectDoesNotExist:
-                # Если пользователь не найден, ничего не делаем.
-                pass
+            # Проверяем, существует ли уже пользователь с новым именем
+            if User.objects.filter(username=instance.project_nick).exists():
+                raise ValidationError(
+                    f"Имя Прибора {instance.project_nick} уже занято.")
+            # Переименовываем пользователя
+            user.username = instance.project_nick
+            user.save()  # Сохраняем изменения
+
 
         # Проверка изменения пароля проекта (project_password)
         if old_instance.project_password != instance.project_password:
