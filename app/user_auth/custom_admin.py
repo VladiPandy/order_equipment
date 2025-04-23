@@ -16,9 +16,9 @@ class CustomAuthConfig(AppConfig):
     verbose_name = 'my super special auth name'
 
 class CustomAdminSite(AdminSite):
-    site_header = "Сервис бронирования"  # Верхний заголовок админ-панели
-    site_title = "Сервис бронирования"  # Заголовок окна браузера
-    index_title = "Добро пожаловать в Сервис бронирования"
+    site_header = "Запись на анализы"  # Верхний заголовок админ-панели
+    site_title = "Запись на анализы"  # Заголовок окна браузера
+    index_title = "Добро пожаловать в Запись на анализы"
 
     def has_permission(self, request):
         # Разрешаем доступ только если пользователь авторизован и is_staff=True

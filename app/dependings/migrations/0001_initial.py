@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='ProjectPerAnalyze',
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('limit_samples', models.IntegerField(default=False, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)], verbose_name='Ограничение по колличеству анализов')),
+                ('limit_samples', models.IntegerField(default=False, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)], verbose_name='Ограничение по количеству анализов')),
                 ('analazy_n', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='analyze_2', to='basic_elements.analyze', verbose_name='Анализ')),
                 ('project_n', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='project_2', to='basic_elements.project', verbose_name='Проект')),
             ],

@@ -84,7 +84,7 @@ class ProjectPerAnalyze(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project_n = models.ForeignKey(Project, on_delete=models.CASCADE, verbose_name='Проект', related_name='project_2')
     analazy_n = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ', related_name='analyze_2')
-    limit_samples = models.IntegerField(default=False, verbose_name='Ограничение по колличеству анализов',validators=[MinValueValidator(0),
+    limit_samples = models.IntegerField(default=False, verbose_name='Ограничение по количеству анализов',validators=[MinValueValidator(0),
                                            MaxValueValidator(100)])
 
     def clean(self) -> None:

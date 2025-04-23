@@ -195,3 +195,86 @@ async def get_project_bookings(
                             detail=f"Неверные входные данные: {e}")
 
     return await UserInfoService.info_equipment(req_model, user, db)
+
+
+@router.post("/download_equipment",
+    tags=['Информация'],
+    summary='Скачать Excel с таблицей занятости оборудования',
+    description='Формирует и отдает Excel-файл с таблицей занятости оборудования',
+    status_code=status.HTTP_200_OK
+)
+@admin_or_current_user_only
+async def download_equipment_excel(
+        request: Request,
+        req_model: InfoListsRequest,
+        db: AsyncSession = Depends(get_db),
+        user: object = None
+):
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+        data_check = data if data else {}
+        req_model = InfoListsRequest(**data_check)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
+
+    return await UserInfoService.download_equipment_excel(req_model, user, db)
+
+
+
+@router.post("/download_executor",
+    tags=['Информация'],
+    summary='Скачать Excel с таблицей занятости исполнителей',
+    description='Формирует и отдает Excel-файл с таблицей занятости исполнителей',
+    status_code=status.HTTP_200_OK
+)
+@admin_or_current_user_only
+async def download_executor_excel(
+        request: Request,
+        req_model: InfoListsRequest,
+        db: AsyncSession = Depends(get_db),
+        user: object = None
+):
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+        data_check = data if data else {}
+        req_model = InfoListsRequest(**data_check)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
+
+    return await UserInfoService.download_executor_excel(req_model, user, db)
+
+
+# Новая ручка для скачивания Excel с таблицей бронирований
+@router.post("/download_bookings",
+    tags=['Информация'],
+    summary='Скачать Excel с таблицей бронирований',
+    description='Формирует и отдает Excel-файл со всеми данными бронирования',
+    status_code=status.HTTP_200_OK
+)
+@admin_or_current_user_only
+async def download_bookings_excel(
+        request: Request,
+        req_model: InfoListsRequest,
+        db: AsyncSession = Depends(get_db),
+        user: object = None
+):
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+        data_check = data if data else {}
+        req_model = InfoListsRequest(**data_check)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Неверные входные данные: {e}")
+
+    return await UserInfoService.download_bookings_excel(req_model, user, db)

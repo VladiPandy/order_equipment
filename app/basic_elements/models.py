@@ -116,7 +116,7 @@ class Analyze(UUIDMixin, TimeStampedMixin):
         verbose_name_plural = 'Анализы'
 
     def __str__(self):
-        return f"{self.analyze_name}  типа  {self.analyze_type}"
+        return f"{self.analyze_name} : {self.analyze_type}"
 
 
     def clean(self) -> None:
