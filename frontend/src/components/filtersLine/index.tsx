@@ -11,12 +11,13 @@ import Input from '../../ui/Input'
 import Button from '../../ui/Button'
 import { FiltersContext } from '../../features/filtersProvider'
 import { DateRange } from '../../types'
-import { adminSubPages } from '../../pages/admin/index.tsx'
 
-const FiltersLine: FC = () => {
+interface Props {
+    onTables?: boolean
+}
+
+const FiltersLine: FC<Props> = ({onTables = false}) => {
     const { filters, filtersOptions, changeFilters, resetFilters, loading } = useContext(FiltersContext)
-
-    const filtersIsActive = ![adminSubPages.instruments, adminSubPages.employees].includes(localStorage.getItem('currentPage') as string)
 
     const handleReset = () => {
         resetFilters()
@@ -41,6 +42,7 @@ const FiltersLine: FC = () => {
                     type="calendar"
                     value={filters[filter] as DateRange}
                     setValue={changeFilters}
+                    onlyWeek={onTables}
                 />
             )
         }
@@ -55,7 +57,7 @@ const FiltersLine: FC = () => {
                     setValue={changeFilters}
                     options={filtersOptions[filter] as string[]}
                     isMultiple={isMultiple}
-                    enabled={filtersIsActive}
+                    enabled={!onTables}
                 />
             )
         }

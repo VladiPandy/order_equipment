@@ -30,4 +30,10 @@
     &.secondary {
         color: var(--color-blue);
     }
+
+    &.danger {
+        background-color: var(--color-red);
+        color: white;
+        border-color: var(--color-red);
+    }
 }

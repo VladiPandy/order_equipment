@@ -1,49 +1,25 @@
-import { FC, useContext, useEffect } from 'react'
+import { FC, useContext } from 'react'
 
 import './style.scss'
 
 import { InfoContext } from '../../features/infoProvider'
-import { FiltersContext } from '../../features/filtersProvider'
 import { addSpacesBeforeCapitals } from '../../utils/formatString'
 import { Loader } from '../../ui/Loader'
 import { FilteredDataContext } from '../../features/filteredDataProvider'
+import EmptyState from '../EmptyState'
 
 const headers = ['Оператор', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
 const EmployeesTable: FC = () => {
-    const { getFilters, filters, getFilterBody } = useContext(FiltersContext)
-    const { getExecutors, loading } = useContext(InfoContext)
+    const {loading } = useContext(InfoContext)
 
     const {
         filteredExecutors: executors,
-        filterExecutors
     } = useContext(FilteredDataContext)
-
-    useEffect(() => {
-        getFilters()
-        getExecutors(getFilterBody())
-        const timer = setInterval(() => {
-            getFilters()
-            getExecutors(getFilterBody())
-        }, 1000 * 60 * 10)
-        return () => clearInterval(timer)
-    }, [])
-
-    useEffect(() => {
-        if (loading) {
-            getExecutors(getFilterBody())
-        }
-
-        filterExecutors(filters)
-    }, [filters])
-
-    useEffect(() => {
-        getExecutors(getFilterBody())
-    }, [])
 
     return (
         <div className="AdminPageTable">
-            {loading ? <Loader/> : 
+            {loading ? <Loader/> : executors.length === 0 ? <EmptyState/> :
             <table>
                 <thead>
                     <tr>

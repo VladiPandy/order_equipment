@@ -13,7 +13,7 @@ import Button from '../../ui/Button'
 import { UserContext } from '../../features/user'
 
 const Header: FC = () => {
-    const { user, logOut } = useContext(UserContext)
+    const { user } = useContext(UserContext)
     const [lastUpdate, setLastUpdate] = useState<string>('')
 
     useEffect(() => {
@@ -34,7 +34,7 @@ const Header: FC = () => {
             <div className="right">
                 <p>{user.is_admin ? 'Администратор' : user.project_name}</p>
                 <p>{user.responsible_fio}</p>
-                <Button type='icon' onClick={logOut}><a href='/logout'><LogOut/></a></Button>
+                <Button type='icon' onClick={()=>{}}><a href='/logout'><LogOut/></a></Button>
             </div>
             }
         </div>

@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import Header from './components/header/index'
 import Navigation from './components/navigation'
-import FiltersLine from './components/filtersLine/index'
 import MainPage from './pages/main'
 
 import AdminPage from './pages/admin'
@@ -41,7 +40,6 @@ function App() {
           <FiltersProvider>
             <InfoProvider>
               <FilteredDataProvider>
-                <FiltersLine />
                 {renderContent()}
               </FilteredDataProvider>
             </InfoProvider>

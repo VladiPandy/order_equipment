@@ -48,6 +48,10 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
 
     const prevDate = useRef(filters.date)
 
+    const instrumentsDateRef = useRef(filters.date)
+    const executorsDateRef = useRef(filters.date)
+    const bookingsDateRef = useRef(filters.date)
+
     const filterOnDate = (value: string, getter: (date: DateRange) => void) => {
         const bookingDate = parse(value as string, 'dd.MM.yyyy', new Date())
         const startDate = parse(filters.date.start, 'dd.MM.yyyy', new Date())
@@ -76,34 +80,37 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     }, [executors, filters])
 
     const filterBookings = (filters: Filters) => {
-        const filtered = bookings.filter((booking) => {
-            return Object.entries(booking).reduce((acc, [key, value]) => {
-                if (!acc) return false
-
-                if (key in filters) {
-                    const filterValue = filters[key as keyof Filters]
-                    if (key === 'date') {
-                        return filterOnDate(value as string, getBookings)
+        if (filters.date.start !== bookingsDateRef.current.start || filters.date.end !== bookingsDateRef.current.end) {
+            bookingsDateRef.current = filters.date
+            getBookings(filters.date)
+        } else {
+            const filtered = bookings.filter((booking) => {
+                return Object.entries(booking).reduce((acc, [key, value]) => {
+                    if (!acc) return false
+    
+                    if (key in filters) {
+                        const filterValue = filters[key as keyof Filters]
+                        if (key === 'date') {
+                            return filterOnDate(value as string, getBookings)
+                        }
+                        if (Array.isArray(filterValue)) {
+                            if (!filterValue.length) return true
+                            if (filterValue.includes(value as string)) return true
+                        }
+                        return false
                     }
-                    if (Array.isArray(filterValue)) {
-                        if (!filterValue.length) return true
-                        if (filterValue.includes(value as string)) return true
-                    }
-                    return false
-                }
-                return true
-            }, true)
-        })
-        setFilteredBooking(filtered)
+                    return true
+                }, true)
+            })
+            setFilteredBooking(filtered)
+        }
     }
-
-    const dateRef = useRef(filters.date)
 
     const filterInstruments = (filters: Filters) => {
         const { date } = filters
         setFilteredInstruments(instruments)
-        if (date.start !== dateRef.current.start || date.end !== dateRef.current.end) {
-            dateRef.current = date
+        if (date.start !== instrumentsDateRef.current.start || date.end !== instrumentsDateRef.current.end) {
+            instrumentsDateRef.current = date
             getInstruments(date)
         }
     }
@@ -111,8 +118,8 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     const filterExecutors = (filters: Filters) => {
         const { date } = filters
         setFilteredExecutors(executors)
-        if (date.start !== dateRef.current.start || date.end !== dateRef.current.end) {
-            dateRef.current = date
+        if (date.start !== executorsDateRef.current.start || date.end !== executorsDateRef.current.end) {
+            executorsDateRef.current = date
             getExecutors(date)
         }
     }

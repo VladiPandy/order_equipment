@@ -6,7 +6,8 @@ import { DateRange } from '../../../types'
 export const CalendarInput: FC<CalendarInputProps> = ({
     value,
     setValue,
-    filter
+    filter,
+    onlyWeek,
 }) => {
     const handleChange = (newValue: DateRange) => {
         setValue(newValue, filter)
@@ -15,6 +16,7 @@ export const CalendarInput: FC<CalendarInputProps> = ({
     return (
         <DatePicker 
             value={value}
+            onlyWeek={onlyWeek}
             onChange={handleChange}
         />
     )

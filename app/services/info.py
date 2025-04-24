@@ -14,6 +14,7 @@ import logging
 from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
     InfoListsResponse, InfoBookingItem, InfoEquipmentTable, InfoExecutorTable
 from services.booking import UserBookingService
+from sql.info_queries import BOOKING_INFO_STAFF, BOOKING_INFO_USER
 
 logger = logging.getLogger(__name__)
 
@@ -131,40 +132,58 @@ class UserInfoService:
         # Формируем запрос в зависимости от роли пользователя
 
         if user.is_staff:
-            query = text("""
-                    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-                     , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
-                    FROM projects_booking x
-                    JOIN "project" y ON y.id = x.project_id
-                    JOIN "analyze" z ON z.id = x.analyse_id
-                    JOIN equipment e ON e.id = x.equipment_id
-                    JOIN executor ex ON ex.id = x.executor_id
-                    WHERE x.date_booking BETWEEN :start_date AND :end_date
-                    and x.is_delete = False
-                """)
-            params = {"start_date": date_booking_dict['date_start'],
-                      "end_date": date_booking_dict['date_end']}
-        else:
-            query = text("""
-                    WITH uuid_project AS (
-                        SELECT id, project_name FROM "project" WHERE project_nick = :username
+            query = (
+                text(
+                    BOOKING_INFO_STAFF.format(
+                        start_date = date_booking_dict['date_start'],
+                        end_date = date_booking_dict['date_end']
                     )
-                    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-                        , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
-                    FROM projects_booking x
-                    JOIN uuid_project y ON y.id = x.project_id
-                    JOIN "analyze" z ON z.id = x.analyse_id
-                    JOIN equipment e ON e.id = x.equipment_id
-                    JOIN executor ex ON ex.id = x.executor_id
+                )
+            )
+            # query = text("""
+            #         SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
+            #          , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
+            #         FROM projects_booking x
+            #         JOIN "project" y ON y.id = x.project_id
+            #         JOIN "analyze" z ON z.id = x.analyse_id
+            #         JOIN equipment e ON e.id = x.equipment_id
+            #         JOIN executor ex ON ex.id = x.executor_id
+            #         WHERE x.date_booking BETWEEN :start_date AND :end_date
+            #         and x.is_delete = False
+            #     """)
+            # params = {"start_date": date_booking_dict['date_start'],
+            #           "end_date": date_booking_dict['date_end']}
+        else:
+            query = (
+                text(
+                    BOOKING_INFO_USER.format(
+                        start_date=date_booking_dict['date_start'],
+                        end_date=date_booking_dict['date_end'],
+                        username=user.username
+                    )
+                )
+            )
 
-                    WHERE x.date_booking BETWEEN :start_date AND :end_date
-                    and x.is_delete = False
-                """)
-            params = {"username": user.username,
-                      "start_date": date_booking_dict['date_start'],
-                      "end_date": date_booking_dict['date_end']}
+            # query = text("""
+            #         WITH uuid_project AS (
+            #             SELECT id, project_name FROM "project" WHERE project_nick = :username
+            #         )
+            #         SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
+            #             , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
+            #         FROM projects_booking x
+            #         JOIN uuid_project y ON y.id = x.project_id
+            #         JOIN "analyze" z ON z.id = x.analyse_id
+            #         JOIN equipment e ON e.id = x.equipment_id
+            #         JOIN executor ex ON ex.id = x.executor_id
+            #
+            #         WHERE x.date_booking BETWEEN :start_date AND :end_date
+            #         and x.is_delete = False
+            #     """)
+            # params = {"username": user.username,
+            #           "start_date": date_booking_dict['date_start'],
+            #           "end_date": date_booking_dict['date_end']}
 
-        result = await db.execute(query, params)
+        result = await db.execute(query)
         rows = result.fetchall()
 
         logger.debug("Полученные данные бронирования: %s", rows)
@@ -211,7 +230,7 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name,
+                SELECT y.project_name, x.date_booking, z.analyze_name, e.name,
                        concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
                 FROM projects_booking x
                 JOIN "project" y ON y.id = x.project_id
@@ -227,7 +246,7 @@ class UserInfoService:
                 WITH uuid_project AS (
                     SELECT id, project_name FROM "project" WHERE project_nick = :username
                 )
-                SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name,
+                SELECT y.project_name, x.date_booking, z.analyze_name, e.name,
                        concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
                 FROM projects_booking x
                 JOIN uuid_project y ON y.id = x.project_id
@@ -243,7 +262,7 @@ class UserInfoService:
         rows = result.fetchall()
 
         df = pd.DataFrame(rows, columns=[
-            "ID", "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий"
+            "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий"
         ])
         if not df.empty:
             df["Дата"] = df["Дата"].apply(lambda x: x.strftime("%d.%m.%Y") if hasattr(x, "strftime") else x)
@@ -254,7 +273,7 @@ class UserInfoService:
         output.seek(0)
 
         return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                 headers={"Content-Disposition": "attachment; filename=bookings.xlsx"})
+                                 headers={"Content-Disposition": f"attachment; filename={date_booking_dict['date_start']}_{date_booking_dict['date_end']}_booking.xlsx"})
 
 
     @staticmethod
@@ -263,7 +282,6 @@ class UserInfoService:
             user,
             db: AsyncSession,
     ) -> InfoBookingItem:
-        # 1. Парсинг даты
         request_dict = request_data.dict(exclude_unset=True)
         logger.debug("Запрос данных исполнителей: %s", request_dict)
         
@@ -549,7 +567,7 @@ class UserInfoService:
         output.seek(0)
 
         return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                 headers={"Content-Disposition": "attachment; filename=executors.xlsx"})
+                                 headers={"Content-Disposition": f"attachment; filename={date_booking_dict['date_start']}_{date_booking_dict['date_end']}_executors.xlsx"})
 
 
 
@@ -781,5 +799,5 @@ class UserInfoService:
         output.seek(0)
 
         return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                 headers={"Content-Disposition": "attachment; filename=equipment.xlsx"})
+                                 headers={"Content-Disposition": f"attachment; filename={date_booking_dict['date_start']}_{date_booking_dict['date_end']}_equipment.xlsx"})
 

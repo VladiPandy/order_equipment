@@ -1,6 +1,5 @@
 .MainPageTable {
     font-size: 1.3vw;
-    margin-top: 2.6vw;
     .table-header {
         display: flex;
         flex-direction: row;
@@ -24,5 +23,9 @@
         & + .table-line {
             margin-top: 0.9vw;
         }
+    }
+
+    .Filter-line {
+        margin-bottom: 2.6vw;
     }
 }

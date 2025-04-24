@@ -15,8 +15,9 @@ table {
     th {
         color: rgba(17, 81, 115, 1);
         background: rgba(241, 243, 249, 1);
-        padding: 8px 12px;
+        padding: 10px 8px;
         font-weight: 600;
+        text-align: left;
         &:first-of-type {
             border-radius: 8px 0 0 0;
             overflow: hidden

@@ -316,4 +316,32 @@ OPEN_LOCAL_REGISTRATION_QUERY = """
     SELECT id  FROM \"control_enter_isopenregistration\" 
     WHERE is_open = True
     ;
-""" 
+"""
+
+BOOKING_INFO_STAFF = """
+    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
+     , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
+    FROM projects_booking x
+    JOIN "project" y ON y.id = x.project_id
+    JOIN "analyze" z ON z.id = x.analyse_id
+    JOIN equipment e ON e.id = x.equipment_id
+    JOIN executor ex ON ex.id = x.executor_id
+    WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
+    and x.is_delete = False
+"""
+
+BOOKING_INFO_USER = """
+    WITH uuid_project AS (
+        SELECT id, project_name FROM "project" WHERE project_nick = '{username}'
+    )
+    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
+        , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
+    FROM projects_booking x
+    JOIN uuid_project y ON y.id = x.project_id
+    JOIN "analyze" z ON z.id = x.analyse_id
+    JOIN equipment e ON e.id = x.equipment_id
+    JOIN executor ex ON ex.id = x.executor_id
+
+    WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
+    and x.is_delete = False
+"""

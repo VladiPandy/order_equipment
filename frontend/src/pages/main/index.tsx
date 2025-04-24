@@ -4,6 +4,7 @@ import Button from '../../ui/Button'
 import StatusChip from '../../ui/StatusChip'
 import CreateModal from '../../components/modal/CreateModal'
 import Instruments from '../../ui/Instruments'
+import DeleteModal from '../../components/modal/DeleteModal'
 
 import { BookingType } from '../../types'
 import './style.scss'
@@ -15,6 +16,7 @@ import EmptyState from '../../components/EmptyState'
 import EditModal from '../../components/modal/EditModal'
 import { onSuccess } from '../../utils/toast'
 import { FilteredDataContext } from '../../features/filteredDataProvider'
+import FiltersLine from '../../components/filtersLine'
 
 const headers = ['Проект', 'Дата бронирования', 'Анализ', 'Прибор', 'Исполнитель', 'Число образцов', 'Статус']
 
@@ -28,6 +30,7 @@ type SubmitDataType = {
 
 const MainPage: FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false)
     const [editingItem, setEditingItem] = React.useState<number | null>(null)
 
@@ -91,15 +94,21 @@ const MainPage: FC = () => {
         setIsEditModalOpen(true)
         setEditingItem(editingItem)
     }
+    const handleOpenDeleteModal = (editingItem: number) => {
+        setIsDeleteModalOpen(true)
+        setEditingItem(editingItem)
+    }
 
     const handleEdit = (newEntry: BookingType) => {
         editBooking(newEntry, sendData)
     }
 
-    const handleDelete = (id: number) => {
-        deleteBooking(id, (response: { message: string }) => {
+    const handleDelete = () => {
+        if (!editingItem) return
+        deleteBooking(editingItem, (response: { message: string }) => {
             getFilters()
             getBookings(getFilterBody())
+            setIsDeleteModalOpen(false)
             onSuccess(response.message)
         })
     }
@@ -123,7 +132,7 @@ const MainPage: FC = () => {
                                 id={id as number} 
                                 comment={comment as string} 
                                 handleEdit={() => handleOpenEditModal(id || 0)}
-                                handleDelete={() => handleDelete(id || 0)}
+                                handleDelete={() => handleOpenDeleteModal(id || 0)}
                             />
                         }
                     </div>
@@ -134,8 +143,12 @@ const MainPage: FC = () => {
 
     return (
         <div className="MainPageTable">
+            <FiltersLine />
+
             {isCreateModalOpen && 
             <CreateModal onClose={()=>setIsCreateModalOpen(false)} onSubmit={onSubmitData}/> }
+            {isDeleteModalOpen && 
+            <DeleteModal onClose={()=>setIsDeleteModalOpen(false)} onSubmit={handleDelete}/> }
             {(isEditModalOpen && editingItem) && 
                 <EditModal 
                     onClose={()=>setIsEditModalOpen(false)} 

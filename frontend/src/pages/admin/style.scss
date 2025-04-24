@@ -1,6 +1,6 @@
 .AdminPage {
     padding: 19px 30px 10px;
-    height: 70vw;
+    height: 65vw;
     background-color: white;
     margin-top: 1.3vw;
     border-radius: var(--border-radius);
@@ -13,6 +13,10 @@
             width: 100%;
             &.secondary {
                 background-color: white;
+            }
+            &.icon {
+                border: var(--border);
+                width: 10vw;
             }
         }
     }

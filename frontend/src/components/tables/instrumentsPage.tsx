@@ -1,47 +1,23 @@
-import { FC, useContext, useEffect } from 'react'
+import { FC, useContext } from 'react'
 
 import './style.scss'
-import { FiltersContext } from '../../features/filtersProvider';
 import { InfoContext } from '../../features/infoProvider';
 import { Loader } from '../../ui/Loader';
 import { FilteredDataContext } from '../../features/filteredDataProvider';
+import EmptyState from '../EmptyState';
 
 const headers = ['Прибор', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
 const InstrumentsTable: FC = () => {
-    const { getFilters, filters, getFilterBody } = useContext(FiltersContext)
-    const { getInstruments, loading } = useContext(InfoContext)
+    const { loading } = useContext(InfoContext)
 
     const {
         filteredInstruments: instruments,
-        filterInstruments
     } = useContext(FilteredDataContext)
-
-    useEffect(() => {
-        getFilters()
-        getInstruments(getFilterBody())
-        const timer = setInterval(() => {
-            getFilters()
-            getInstruments(getFilterBody())
-        }, 1000 * 60 * 10)
-        return () => clearInterval(timer)
-    }, [])
-
-    useEffect(() => {
-        if (loading) {
-            getInstruments(getFilterBody())
-        }
-
-        filterInstruments(filters)
-    }, [filters])
-
-    useEffect(() => {
-        getInstruments(getFilterBody())
-    }, [])
 
     return (
         <div className="AdminPageTable">
-            {loading ? <Loader/> : 
+            {loading ? <Loader/> : instruments.length === 0 ? <EmptyState/> :
         <table>
             <thead>
                 <tr>

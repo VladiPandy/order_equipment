@@ -13,5 +13,9 @@ export const endPoints: Record<string, string> = {
 
     infoEquipment: 'info/table_equipment',
     infoExecutor: 'info/table_executor',
+
+    downloadBookings: 'info/download_bookings',
+    downloadExecutors: 'info/download_executor',
+    downloadEquipment: 'info/download_equipment',
 }
 

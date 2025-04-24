@@ -40,8 +40,8 @@ const Instruments: FC<InstrumentsProps> = ({id, handleEdit, handleDelete, commen
     return (
         <div className={`instuments`}>
             <CommentIndicator comment={comment}/>
-            <Button className={'active'} type='icon' onClick={()=>handleDelete(id)}><Trash/></Button>
             <Button className={isEditButtonShow ? 'active' : ''} type='icon' onClick={()=>handleEditClick(id)}><Edit/></Button>
+            <Button className={'active'} type='icon' onClick={()=>handleDelete(id)}><Trash/></Button>
         </div>
     )
 }

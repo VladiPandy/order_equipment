@@ -38,9 +38,10 @@ export interface DropDownInputProps extends BaseInputProps {
 
 export interface CalendarInputProps extends BaseInputProps {
     type: 'calendar'
-    value?: DateRange
+    value: DateRange
     setValue: (value: DateRange, filter: KeyType) => void
-    filter: KeyType
+    filter: KeyType,
+    onlyWeek?: boolean
 }
 
 export type InputProps = 
