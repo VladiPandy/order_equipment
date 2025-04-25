@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from datetime import datetime, timedelta
@@ -73,6 +74,19 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     def __str__(self):
         return self.formatted_working_days()
 
+    def plain_working_days(self):
+        days = [
+            (' Пн', self.monday),
+            (' Вт', self.tuesday),
+            (' Ср', self.wednesday),
+            (' Чт', self.thursday),
+            (' Пт', self.friday),
+            (' Сб', self.saturday),
+            (' Вс', self.sunday),
+        ]
+        working_days = ' '.join([day for day, is_working in days if is_working])
+        return f"{self.week_period}: {working_days}"
+
     def formatted_working_days(self):
         days = [
             ('Пн   ', self.monday),
@@ -85,8 +99,8 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
         ]
 
         return format_html(
-            '<span style="font-size: 32px;line-height: 3;">{}</span>'.format(
-                f'<span style="font-size: 26px;line-height: 3;">{self.week_period}  </span>'+'   '.join(
+            '<span style="font-size: 24px;line-height: 3;">{}</span>'.format(
+                f'<span style="font-size: 15px;line-height: 3;">{self.week_period+"      "}</span>'+'   '.join(
                     [f"<span style='color: green;'>{day}</span>" if is_working else f"<span style='color: gray;'>{day}</span>" for day, is_working in days]
                 )
             )

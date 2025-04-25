@@ -1,8 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from datetime import datetime, timedelta
 from .models import WorkingDayOfWeek, IsOpenRegistration, OpenWindowForOrdering, WorkerWeekStatus
 from user_auth.custom_admin import custom_admin_site
+from django.http import HttpResponseRedirect
 from django.core.exceptions import ValidationError
 
 @admin.register(WorkingDayOfWeek,site=custom_admin_site)
@@ -23,36 +24,37 @@ class WorkingDayOfWeekAdmin(admin.ModelAdmin):
             ]
             kwargs['choices'] = choices
         return super().formfield_for_choice_field(db_field, request, **kwargs)
-    # def save_model(self, request, obj, form, change):
-    #     """
-    #     Проверяем, существует ли уже запись с таким week_period
-    #     """
-    #     ('here')
-    #     (WorkingDayOfWeek.objects.week_period.count())
-    #     print(WorkingDayOfWeek.objects.filter(week_period=obj.week_period).exists())
-    #     if WorkingDayOfWeek.objects.filter(week_period=obj.week_period).exists():
-    #         raise ValidationError(f"Запись с периодом недели '{obj.week_period}' уже существует.")
-    #     super().save_model(request, obj, form, change)
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
 
-    # def has_add_permission(self, request):
-    #     """
-    #     Запрещаем добавление новой записи, если уже существует одна запись
-    #     """
-    #     if WorkingDayOfWeek.objects.count() >= 1:
-    #         return False
-    #     return super().has_add_permission(request)
+    def response_add(self, request, obj, post_url_continue=None):
+        self.message_user(
+            request,
+            f"Рабочие дни недели успешно добавлены: {obj.plain_working_days()}",
+            level=messages.SUCCESS
+        )
+        return HttpResponseRedirect(self._get_redirect_url(request, obj))
 
-    # def get_model_perms(self, request):
-    #     """
-    #     Возвращает права доступа к модели. Здесь мы ограничиваем возможность добавления новой записи,
-    #     оставляя только редактирование и просмотр.
-    #     """
-    #     perms = super().get_model_perms(request)
-    #     # Блокируем возможность добавления новой записи, если уже есть одна запись
-    #     if WorkingDayOfWeek.objects.count() >= 1:
-    #         perms['add'] = False
-    #     return perms
+    def response_change(self, request, obj):
+        self.message_user(
+            request,
+            f"Рабочие дни недели обновлены: {obj.plain_working_days()}",
+            level=messages.SUCCESS
+        )
+        return HttpResponseRedirect(self._get_redirect_url(request, obj))
+
+    def _get_redirect_url(self, request, obj):
+        if "_save" in request.POST:
+            request.path = request.path.replace(f"add/", "")
+            return request.path.replace(f"{obj.pk}/change/", "")
+        elif "_continue" in request.POST:
+            return request.path.replace(f"add/", f"{obj.pk}/change/")  # останемся на той же форме
+        elif "_addanother" in request.POST:
+            return request.path.replace(f"{obj.pk}/change/", "add/")  # форма добавления
+        else:
+            return request.path # назад к списку
+
 
 @admin.register(IsOpenRegistration,site=custom_admin_site)
 class IsOpenRegistrationAdmin(admin.ModelAdmin):

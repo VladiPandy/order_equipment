@@ -229,36 +229,25 @@ class UserInfoService:
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
 
         if user.is_staff:
-            query = text("""
-                SELECT y.project_name, x.date_booking, z.analyze_name, e.name,
-                       concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
-                FROM projects_booking x
-                JOIN "project" y ON y.id = x.project_id
-                JOIN "analyze" z ON z.id = x.analyse_id
-                JOIN equipment e ON e.id = x.equipment_id
-                JOIN executor ex ON ex.id = x.executor_id
-                WHERE x.date_booking BETWEEN :start_date AND :end_date
-                  AND x.is_delete = false
-            """)
-            params = {"start_date": date_booking_dict['date_start'], "end_date": date_booking_dict['date_end']}
-        else:
-            query = text("""
-                WITH uuid_project AS (
-                    SELECT id, project_name FROM "project" WHERE project_nick = :username
+            query = (
+                text(
+                    BOOKING_INFO_STAFF.format(
+                        start_date=date_booking_dict['date_start'],
+                        end_date=date_booking_dict['date_end']
+                    )
                 )
-                SELECT y.project_name, x.date_booking, z.analyze_name, e.name,
-                       concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
-                FROM projects_booking x
-                JOIN uuid_project y ON y.id = x.project_id
-                JOIN "analyze" z ON z.id = x.analyse_id
-                JOIN equipment e ON e.id = x.equipment_id
-                JOIN executor ex ON ex.id = x.executor_id
-                WHERE x.date_booking BETWEEN :start_date AND :end_date
-                  AND x.is_delete = false
-            """)
-            params = {"username": user.username, "start_date": date_booking_dict['date_start'], "end_date": date_booking_dict['date_end']}
-
-        result = await db.execute(query, params)
+            )
+        else:
+            query = (
+                text(
+                    BOOKING_INFO_USER.format(
+                        start_date=date_booking_dict['date_start'],
+                        end_date=date_booking_dict['date_end'],
+                        username=user.username
+                    )
+                )
+            )
+        result = await db.execute(query)
         rows = result.fetchall()
 
         df = pd.DataFrame(rows, columns=[
