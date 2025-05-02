@@ -33,8 +33,9 @@ RUN chmod +x /var/lib/postgresql/backup.sh \
     && chown postgres:postgres /var/lib/postgresql/backup.sh
 
 # Настройка cron для ежедневного бэкапа в 2:00
-RUN echo "0 2 * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresql/cron.log 2>&1" > /etc/cron.d/postgres-backup \
-    && chmod 0644 /etc/cron.d/postgres-backup \
+RUN echo "20 * * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgresql/cron.log 2>&1" > /etc/cron.d/postgres-backup \
+    && chmod 777 /etc/cron.d/postgres-backup \
+    && chmod 777 /var/lib/postgresql/backup.sh \
     && touch /var/log/postgresql/cron.log \
     && chown postgres:postgres /var/log/postgresql/cron.log
 

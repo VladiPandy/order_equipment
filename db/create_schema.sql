@@ -57,19 +57,15 @@ AS $$
 DECLARE
     updated_count integer;
 BEGIN
-    -- Обновляем статус для всех записей, где статус 'Согласовано'
     UPDATE public.projects_booking
     SET status = 'Оценить'
     WHERE status = 'Выполнено'
-    AND is_delete = false
-    RETURNING COUNT(*) INTO updated_count;
-    
-    -- Логируем количество обновленных записей
-    RAISE NOTICE 'Обновлено % записей', updated_count;
-    
+    AND is_delete = false;
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    RAISE NOTICE 'Обновлено % записей', updated_count
     RETURN updated_count;
 END;
-$$;  -- Закрытие долларовых кавычек
+$$;
 
 -- Добавляем комментарий к функции
 COMMENT ON FUNCTION public.update_booking_status IS 'Обновляет статус бронирования с "Согласовано" на "Оценить" для записей текущего дня';
