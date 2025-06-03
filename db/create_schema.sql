@@ -59,10 +59,11 @@ DECLARE
 BEGIN
     UPDATE public.projects_booking
     SET status = 'Оценить'
-    WHERE status = 'Выполнено'
-    AND is_delete = false;
+    WHERE status = 'Принято'
+    AND is_delete = false
+    AND date_booking < now();
     GET DIAGNOSTICS updated_count = ROW_COUNT;
-    RAISE NOTICE 'Обновлено % записей', updated_count
+    RAISE NOTICE 'Обновлено % записей', updated_count;
     RETURN updated_count;
 END;
 $$;
