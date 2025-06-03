@@ -251,7 +251,7 @@ class UserInfoService:
         rows = result.fetchall()
 
         df = pd.DataFrame(rows, columns=[
-            "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий"
+            "id", "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий"
         ])
         if not df.empty:
             df["Дата"] = df["Дата"].apply(lambda x: x.strftime("%d.%m.%Y") if hasattr(x, "strftime") else x)

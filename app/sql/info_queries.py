@@ -319,7 +319,7 @@ OPEN_LOCAL_REGISTRATION_QUERY = """
 """
 
 BOOKING_INFO_STAFF = """
-    SELECT y.project_name, x.date_booking, z.analyze_name, e.name
+    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
      , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN "project" y ON y.id = x.project_id
@@ -334,7 +334,7 @@ BOOKING_INFO_USER = """
     WITH uuid_project AS (
         SELECT id, project_name FROM "project" WHERE project_nick = '{username}'
     )
-    SELECT y.project_name, x.date_booking, z.analyze_name, e.name
+    SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
         , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN uuid_project y ON y.id = x.project_id
