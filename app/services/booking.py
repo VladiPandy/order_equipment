@@ -172,9 +172,9 @@ class UserBookingService:
         try:
             if 'executor' in data:
 
-                    operator_val = f"concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) = '{data['executor']}'"
+                    operator_val = f"concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic) = '{data['executor']}'"
                     operator_info = await db.execute(text(
-                        f"SELECT id FROM \"executor\" WHERE concat(first_name,' ',last_name,' ',patronymic) = '{data['executor']}' ;"))
+                        f"SELECT id FROM \"executor\" WHERE concat(last_name,' ',first_name,' ',patronymic) = '{data['executor']}' ;"))
 
                     operator_id = "'" + str(operator_info.scalars().all()[0]) + "'"
 
@@ -469,7 +469,7 @@ class UserBookingService:
                                 , a.analyze_name
                                 , eq."name" 
                                 , eq.status 
-                                , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic) fio_x
+                                , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic) fio_x
                                 , x.limit_samples - coalesce(ul.used_limit,0) limit_samples
                                 , x.limit_samples limits_per_eq
                                 , coalesce(ul.used_limit,0) used_limit_anales
@@ -680,6 +680,7 @@ class UserBookingService:
         analyze_json = {}
         equipment_json = {}
         executor_json = {}
+        is_priority_json = {}
         samples_list = []
         samples_used = []
         samples_per_day = []
@@ -703,6 +704,7 @@ class UserBookingService:
                     analyze_json[val[12]] = str(val[3])
                     equipment_json[val[13]] = str(val[4])
                     executor_json[val[14]] = str(val[6])
+                    is_priority_json[val[14]] = str(val[-1])
                     for elem in date_booking_dict['dates_list']:
                         if bl_date == elem and date_json[elem] == 1:
                             date_json[elem] += 1
@@ -721,6 +723,7 @@ class UserBookingService:
                 analyze_json[val[12]] = str(val[3])
                 equipment_json[val[13]] = str(val[4])
                 executor_json[val[14]] = str(val[6])
+                is_priority_json[val[14]] = str(val[-1])
                 samples_list.append(val[8])
                 samples_used.append(val[9])
                 samples_per_day.append(val[-2])
@@ -749,6 +752,7 @@ class UserBookingService:
             analyse=analyze_json,
             equipment=equipment_json,
             executor=executor_json,
+            is_priority=is_priority_json,
             samples_limit=min([samples_limit,limit_sample_value]),
             used=samples_used
         )
@@ -860,7 +864,7 @@ class UserBookingService:
 
         try:
             executor_query = await db.execute(text(
-                f"SELECT  concat(first_name,' ',last_name,' ',patronymic)  FROM \"executor\" WHERE id = '{executor_id}' ;"))
+                f"SELECT  concat(last_name,' ',first_name,' ',patronymic)  FROM \"executor\" WHERE id = '{executor_id}' ;"))
             executor_fio = str(executor_query.scalars().all()[0])
         except Exception as e:
             logger.error("Неверный формат исполнителя: %s", e)
@@ -947,6 +951,7 @@ class UserBookingService:
         analyze_json = {}
         equipment_json = {}
         executor_json = {}
+        is_priority_json = {}
         samples_list = []
         samples_used = []
 
@@ -968,6 +973,7 @@ class UserBookingService:
             analyze_json[val[12]] = str(val[3])
             equipment_json[val[13]] = str(val[4])
             executor_json[val[14]] = str(val[6])
+            is_priority_json[val[14]] = val[-1]
 
             samples_list.append(val[8])
             samples_used.append(val[9])
@@ -981,9 +987,6 @@ class UserBookingService:
         const_samples_used_per_day = max(
             map(int, list(set(samples_used_per_day))))
 
-        print(date_booking_dict['dates_list'])
-        print(booking_info['date_info'])
-        print(row[1].strftime('%d.%m.%Y'))
         if limit_sample_value < 0:
             raise HTTPException(status_code=403,
                                 detail="Достигнут недельный лимит")
@@ -1004,6 +1007,7 @@ class UserBookingService:
                     analyse=analyze_json,
                     equipment=equipment_json,
                     executor=executor_json,
+                    is_priority=is_priority_json,
                     samples_limit=min([const_samples_limit_per_day,limit_sample_value]) + int(row[-3]),
                     samples_used = const_samples_used_per_day,
                     status={

@@ -7,7 +7,7 @@ SQL-запросы для модуля информации
 # Запрос для администраторов
 INFO_BOOKING_LISTS_ADMIN_QUERY = """
     SELECT y.project_name, x.date_booking, z.analyze_name, e.name, 
-    concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.status
+    concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.status
     FROM projects_booking x
     JOIN "project" y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
@@ -23,7 +23,7 @@ INFO_BOOKING_LISTS_USER_QUERY = """
         SELECT id, project_name FROM "project" WHERE project_nick = :username
     )
     SELECT y.project_name, x.date_booking, z.analyze_name, e.name, 
-    concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.status
+    concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.status
     FROM projects_booking x
     JOIN uuid_project y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
@@ -39,7 +39,7 @@ INFO_BOOKING_LISTS_USER_QUERY = """
 # Запрос для администраторов
 INFO_BOOKINGS_ADMIN_QUERY = """
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-     , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
+     , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN "project" y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
@@ -55,7 +55,7 @@ INFO_BOOKINGS_USER_QUERY = """
         SELECT id, project_name FROM "project" WHERE project_nick = :username
     )
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-        , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
+        , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN uuid_project y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
@@ -70,7 +70,7 @@ INFO_BOOKINGS_USER_QUERY = """
 
 # Запрос для администраторов
 INFO_EXECUTOR_ADMIN_QUERY = """
-    select concat(e.first_name,e.last_name,coalesce(e.patronymic,'')) fio
+    select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
         , max(case 
             when cew.monday = 'Выходной' then 'Выходной'
             when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
@@ -120,12 +120,12 @@ INFO_EXECUTOR_ADMIN_QUERY = """
     where pb.date_booking between :start_date and :end_date and (cew.executor_id is not null
     and to_date(split_part(cew.week_period,'-',1),'dd.mm.YYYY') = :start_date::date 
     and to_date(split_part(cew.week_period,'-',2),'dd.mm.YYYY') = :end_date::date)
-    group by concat(e.first_name,e.last_name,coalesce(e.patronymic,''))
+    group by concat(e.last_name,e.first_name,coalesce(e.patronymic,''))
 """
 
 # Запрос для обычных пользователей
 INFO_EXECUTOR_USER_QUERY = """
-    select concat(e.first_name,e.last_name,coalesce(e.patronymic,'')) fio
+    select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
         , max(case 
             when cew.monday = 'Выходной' then 'Выходной'
             when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
@@ -176,7 +176,7 @@ INFO_EXECUTOR_USER_QUERY = """
     where pb.date_booking between :start_date and :end_date and (cew.executor_id is not null
     and to_date(split_part(cew.week_period,'-',1),'dd.mm.YYYY') = :start_date::date 
     and to_date(split_part(cew.week_period,'-',2),'dd.mm.YYYY') = :end_date::date)
-    group by concat(e.first_name,e.last_name,coalesce(e.patronymic,''))
+    group by concat(e.last_name,e.first_name,coalesce(e.patronymic,''))
 """
 
 # Запросы для info_equipment
@@ -320,7 +320,7 @@ OPEN_LOCAL_REGISTRATION_QUERY = """
 
 BOOKING_INFO_STAFF = """
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-     , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
+     , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN "project" y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
@@ -335,7 +335,7 @@ BOOKING_INFO_USER = """
         SELECT id, project_name FROM "project" WHERE project_nick = '{username}'
     )
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-        , concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
+        , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
     FROM projects_booking x
     JOIN uuid_project y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id

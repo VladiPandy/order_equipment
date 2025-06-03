@@ -38,7 +38,7 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                SELECT y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.status
+                SELECT y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.status
                 FROM projects_booking x
                 JOIN "project" y ON y.id = x.project_id
                 JOIN "analyze" z ON z.id = x.analyse_id
@@ -54,7 +54,7 @@ class UserInfoService:
                 WITH uuid_project AS (
                     SELECT id, project_name FROM "project" WHERE project_nick = :username
                 )
-                SELECT y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.first_name,' ',ex.last_name,' ',ex.patronymic), x.status
+                SELECT y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.status
                 FROM projects_booking x
                 JOIN uuid_project y ON y.id = x.project_id
                 JOIN "analyze" z ON z.id = x.analyse_id
@@ -281,7 +281,7 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                        select concat(e.first_name,e.last_name,coalesce(e.patronymic,'')) fio
+                        select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
                             , max(case 
 			when cew.monday = 'Выходной' then 'Выходной'
                                 when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
@@ -330,7 +330,7 @@ class UserInfoService:
                         left join "analyze" a  on a.id = pb.analyse_id  
                         where pb.is_delete = false
                         and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by concat(e.first_name,e.last_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
                     """)
             params = {"start_date": date_booking_dict['date_start'],
                       "end_date": date_booking_dict['date_end']}
@@ -435,7 +435,7 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                select concat(e.first_name,e.last_name,coalesce(e.patronymic,'')) fio
+                select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
                             , max(case 
 			when cew.monday = 'Выходной' then 'Выходной'
                                 when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
@@ -484,7 +484,7 @@ class UserInfoService:
                         left join "analyze" a  on a.id = pb.analyse_id  
                         where pb.is_delete = false
                         and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by concat(e.first_name,e.last_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
             """)
             params = {"start_date": date_booking_dict['date_start'], "end_date": date_booking_dict['date_end']}
         else:

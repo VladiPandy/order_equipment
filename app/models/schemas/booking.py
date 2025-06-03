@@ -28,6 +28,7 @@ class BaseBookingResponse(BaseModel):
     analyse: Dict[str, Any]
     equipment: Dict[str, Any]
     executor: Dict[str, Any]
+    is_priority: Dict[str, Any]
     samples_limit: int
     used: int
 
@@ -54,6 +55,7 @@ class ChangeData(BaseModel):
     analyse: Dict[str, Any]
     equipment: Dict[str, Any]
     executor: Dict[str, Any]
+    is_priority: Dict[str, Any]
     samples_limit: int
     samples_used: int
     status: Dict[str, Any]

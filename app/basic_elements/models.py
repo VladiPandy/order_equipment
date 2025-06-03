@@ -140,8 +140,8 @@ class Analyze(UUIDMixin, TimeStampedMixin):
 
 # Модель Исполнителя
 class Executor(UUIDMixin, TimeStampedMixin):
-    first_name = models.CharField(max_length=255, verbose_name='Имя')
     last_name = models.CharField(max_length=255, verbose_name='Фамилия')
+    first_name = models.CharField(max_length=255, verbose_name='Имя')
     patronymic = models.CharField(max_length=255, verbose_name='Отчество', blank=True, null=True)
 
     class Meta:
@@ -152,7 +152,7 @@ class Executor(UUIDMixin, TimeStampedMixin):
         verbose_name_plural = 'Исполнители'
 
     def __str__(self):
-        return f"{self.first_name}  {self.last_name}  {self.patronymic}"
+        return f"{self.last_name}  {self.first_name}  {self.patronymic}"
 
 
     def clean(self) -> None:

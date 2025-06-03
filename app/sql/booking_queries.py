@@ -147,7 +147,7 @@ GET_EQUIPMENT_ID_BY_NAME_QUERY = """
 
 # Запрос для получения ID исполнителя по ФИО
 GET_EXECUTOR_ID_BY_NAME_QUERY = """
-    SELECT id FROM "executor" WHERE concat(first_name,' ',last_name,' ',patronymic) = '{executor_name}';
+    SELECT id FROM "executor" WHERE concat(last_name,' ',first_name,' ',patronymic) = '{executor_name}';
 """
 
 # Запросы для работы с токенами
