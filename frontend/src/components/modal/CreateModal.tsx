@@ -29,6 +29,7 @@ type API_FilterType = {
     executor: {[key: string]: string}
     samples: number
     used: number
+    is_priority: {[key: string]: string}
 }
 
 const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
@@ -42,6 +43,8 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
     const [sending, setSending] = useState(false)
     const [options, setOptions] = useState<OptionsType>()
     const [readyToSubmit, setReadyToSubmit] = useState(false)
+
+    const [hasPriorityExecutor, setHasPriorityExecutor] = useState(false)
 
     useEffect(() => {
         if (loading) {
@@ -66,6 +69,16 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
                     break
                 case 'date':
                     options[key] = value as {[key: string]: 0 | 1 | 2}
+                    break
+                case 'executor':
+                    options[key] = Object.entries(value).map(([id, name]) => {
+                        if (data.is_priority?.[id] === 'True') {
+                            setHasPriorityExecutor(true)
+                        }
+                        return {
+                            name,
+                            isPriority: data.is_priority?.[id] === 'True'
+                        }})
                     break
                 default:
                     options[key] = [] as string[]
@@ -190,6 +203,7 @@ const CreateModal: FC<CreateProps> = ({ onClose, onSubmit }) => {
                     type='dropDown'
                     filter='executor'
                     isMultiple={false}
+                    isPrioritySupport={hasPriorityExecutor}
                 />
                 <Input 
                     placeholder={`Количество (макс. ${options?.samples_limit})`} 

@@ -3,17 +3,18 @@ import './style.scss'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import Arrow from '../../assets/arrow.svg?react'
-import { KeyType } from '../../types'
+import { KeyType, ExecutorOption } from '../../types'
 
 interface DropDownProps {
     placeholder: string
-    options: string[] | {[key in string]: string}
+    options: string[] | {[key in string]: string} | ExecutorOption[]
     value?: string[]
     filter: KeyType
     children?: JSX.Element
     onChange: (atr: string[], type: KeyType) => void
     isMultiple?: boolean
     enabled?: boolean
+    isPrioritySupport?: boolean
 }
 
 const DropDown: React.FC<DropDownProps> = ({
@@ -24,7 +25,8 @@ const DropDown: React.FC<DropDownProps> = ({
     children,
     onChange,
     isMultiple = true,
-    enabled
+    enabled,
+    isPrioritySupport = false
 }) => {
     const [selected, setSelected] = useState<string[]>(value)
     const [isOpen, setIsOpen] = useState(false)
@@ -79,7 +81,21 @@ const DropDown: React.FC<DropDownProps> = ({
 
     const renderOptions = () => {
         if (Array.isArray(options)) {
-            return options.map((option, index) => (
+            if (options.length > 0 && typeof options[0] === 'object' && 'name' in options[0]) {
+                return (options as ExecutorOption[]).map((option, index) => (
+                    <p
+                        key={index}
+                        className={`${selected.includes(option.name) ? 'active' : ''} ${option.isPriority ? 'priority' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleSelect(option.name)
+                        }}
+                    >
+                        {option.name}
+                    </p>
+                ))
+            }
+            return (options as string[]).map((option, index) => (
                 <p
                     key={index}
                     className={selected.includes(option) ? 'active' : ''}
@@ -93,7 +109,7 @@ const DropDown: React.FC<DropDownProps> = ({
             ))
         }
 
-        return Object.entries(options).map(([key, value]) => (
+        return Object.entries(options as {[key in string]: string}).map(([key, value]) => (
             <p
                 key={key}
                 className={selected.includes(value) ? 'active' : ''}
@@ -119,7 +135,7 @@ const DropDown: React.FC<DropDownProps> = ({
                 value={displayValue}
             />
             {isOpen && (
-                <div ref={dropdownRef} className='dropdown'>
+                <div ref={dropdownRef} className={`dropdown ${isPrioritySupport && 'priority-support'}`}>
                     {renderOptions()}
                 </div>
             )}

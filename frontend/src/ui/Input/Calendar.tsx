@@ -1,6 +1,6 @@
 import { FC, useEffect, useState, useRef } from 'react'
 import Calendar from 'react-calendar'
-import { endOfWeek, format, startOfWeek, Day, addWeeks } from 'date-fns'
+import { endOfWeek, format, startOfWeek, Day } from 'date-fns'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import Arrow from '../../assets/arrow.svg?react'
@@ -11,6 +11,7 @@ import { DateRange, Keys, KeyType } from '../../types'
 import 'react-calendar/dist/Calendar.css';
 import { convertDDMMYYYYToISO } from '../../utils/date-utils'
 import { LooseValue } from 'react-calendar/src/shared/types.js'
+import { getDefaultDateRange, getNextWeekDateRange } from '../../features/filtersProvider'
 
 interface CalendarPropsType {
     value: DateRange
@@ -26,13 +27,9 @@ const DatePicker: FC<CalendarPropsType> = ({ value, onChange, onlyWeek = false }
 
     useEffect(() => {
         if (onlyWeek) {
-            const nextWeek = addWeeks(new Date(), 1);
-            const startOfNextWeek = format(startOfWeek(nextWeek, {weekStartsOn: 1 as Day}), 'dd.MM.yyyy');
-            const endOfNextWeek = format(endOfWeek(nextWeek, {weekStartsOn: 1 as Day}), 'dd.MM.yyyy');
-            onChange({
-                start: startOfNextWeek,
-                end: endOfNextWeek
-            }, Keys.DATE)
+            onChange(getNextWeekDateRange(), Keys.DATE)
+        } else {
+            onChange(getDefaultDateRange(), Keys.DATE)
         }
     }, [])
 

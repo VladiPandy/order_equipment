@@ -31,6 +31,8 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
     const [options, setOptions] = useState<OptionsType>()
     const [readyToSubmit, setReadyToSubmit] = useState(false)
 
+    const [hasPriorityExecutor, setHasPriorityExecutor] = useState(false)
+
     useEffect(() => {
         if (loading) {
             const body = {
@@ -49,9 +51,37 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
 
     const prepareFilterData = (data: FilterBodyType) => {
         setLoading(false)
+        const options = {} as OptionsType
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
-        setOptions(data.change)
+        Object.entries(data.change).forEach(([key, value]) => {
+            switch(key) {
+                case 'executor':
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error
+                    options[key] = Object.entries(value).map(([id, name]) => {
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-expect-error
+                        if (data.is_priority?.[id] === 'True') {
+                            setHasPriorityExecutor(true)
+                        }
+                        return {
+                            name,
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                            // @ts-expect-error
+                            isPriority: data.is_priority?.[id] === 'True'
+                        }
+                    })
+                    break
+                default:
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error
+                    options[key] = value
+                    break
+            }
+        })
+        
+        setOptions(options)
     }
     
     const handleSubmit = (e: React.FormEvent) => {
@@ -170,6 +200,7 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
                     type='dropDown'
                     filter='executor'
                     isMultiple={false}
+                    isPrioritySupport={hasPriorityExecutor}
                 />
                 <Input 
                     placeholder={'Статус'} 

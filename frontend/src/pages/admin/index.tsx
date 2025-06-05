@@ -17,7 +17,9 @@ const adminSubPages = {total: 'total', instruments: 'instruments', employees: 'e
 
 const AdminPage: FC = () => {
     const [currentPage, setCurrentPage] = useState<string>(adminSubPages.total)
-    const {getFilterBody} = useContext(FiltersContext)
+    const {getFilterBody, getFilters} = useContext(FiltersContext)
+
+    useEffect(() => getFilters(), [])
 
     useEffect(() => {
         localStorage.setItem('currentPage', currentPage)

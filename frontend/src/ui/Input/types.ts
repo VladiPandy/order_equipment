@@ -34,6 +34,7 @@ export interface DropDownInputProps extends BaseInputProps {
     filter: KeyType
     isMultiple?: boolean
     enabled?: boolean
+    isPrioritySupport?: boolean
 }
 
 export interface CalendarInputProps extends BaseInputProps {
@@ -48,4 +49,4 @@ export type InputProps =
     | TextInputProps 
     | NumberInputProps 
     | DropDownInputProps 
-    | CalendarInputProps 
+    | CalendarInputProps & { isPrioritySupport?: boolean }

@@ -34,13 +34,17 @@ export type SimpleValueChangeType = (value: string | number) => void
 
 export type FilterChangeType = (value: string[] | string, type: KeyType) => void
 
+export type ExecutorOption = {
+    name: string
+    isPriority: boolean
+}
+
 export type OptionsType = {
-    [key: string]: string[] | number | {[key: string]: 0 | 1 | 2}
+    [key: string]: string[] | number | {[key: string]: 0 | 1 | 2} | ExecutorOption[]
     samples_limit: number
     used: number
     date: {[key: string]: 0 | 1 | 2}
 }
-
 
 export type BookingType = {
     id?: number,

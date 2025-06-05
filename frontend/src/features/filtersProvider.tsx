@@ -2,13 +2,21 @@ import { createContext, FC, useState } from "react"
 import { globalPost } from "../api/globalFetch"
 import { endPoints } from "../api/endPoints"
 import { Filters, KeyType, FilterBodyType, DateRange, FilterValue } from "../types"
-import { format, subDays, addDays } from 'date-fns'
+import { format, subDays, addDays, addWeeks, startOfWeek, endOfWeek, Day } from 'date-fns'
 
-const getDefaultDateRange = (): DateRange => {
+export const getDefaultDateRange = (): DateRange => {
     const today = new Date()
     return {
         start: format(subDays(today, 14), 'dd.MM.yyyy'),
         end: format(addDays(today, 14), 'dd.MM.yyyy')
+    }
+}
+
+export const getNextWeekDateRange = (): DateRange => {
+    const nextWeek = addWeeks(new Date(), 1)
+    return {
+        start: format(startOfWeek(nextWeek, { weekStartsOn: 1 as Day }), 'dd.MM.yyyy'),
+        end: format(endOfWeek(nextWeek, { weekStartsOn: 1 as Day }), 'dd.MM.yyyy')
     }
 }
 

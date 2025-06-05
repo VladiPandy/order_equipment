@@ -12,7 +12,7 @@ export const baseURL = `${apiUrl}${apiVersion}`;
 export const axiosInstance = (user: string = users[0]) => axios.create({
   baseURL,
   headers: {
-    //'Authorization': `Basic ${user}`,
+    'Authorization': `Basic ${user}`,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'mode': 'cors'
