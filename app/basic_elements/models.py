@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 import re
 
 from typing import Any
@@ -38,6 +39,10 @@ class Equipment(UUIDMixin,TimeStampedMixin):
 
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, verbose_name='Статус работы')
 
+    count_samples = models.IntegerField(default=False,
+                                        verbose_name='Суточный лимит прибора',
+                                        validators=[MinValueValidator(0),
+                                                    MaxValueValidator(100)])
     class Meta:
         # Ваши таблицы находятся в нестандартной схеме. Это нужно указать в классе модели
         db_table = "public\".\"equipment"
