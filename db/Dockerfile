@@ -18,7 +18,7 @@ RUN git clone https://github.com/citusdata/pg_cron.git \
 # Добавляем pg_cron в shared_preload_libraries
 RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample \
     && echo "cron.database_name = '${DB_NAME}'" >> /usr/share/postgresql/postgresql.conf.sample \
-    && echo "cron.host = 'db'" >> /usr/share/postgresql/postgresql.conf.sample
+    #&& echo "cron.host = 'db'" >> /usr/share/postgresql/postgresql.conf.sample
 # Копируем скрипты
 COPY create_schema.sql /docker-entrypoint-initdb.d/create_schema.sql
 COPY init_backup.sql /docker-entrypoint-initdb.d/init_backup.sql
@@ -40,5 +40,3 @@ RUN echo "20 * * * * postgres /var/lib/postgresql/backup.sh >> /var/log/postgres
     && chown postgres:postgres /var/log/postgresql/cron.log
 
 
-
-CMD ["sh", "-c", "service cron start && docker-entrypoint-initdb.d/restore.sh && docker-entrypoint.sh postgres"]
