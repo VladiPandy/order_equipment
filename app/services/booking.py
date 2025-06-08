@@ -321,6 +321,14 @@ class UserBookingService:
                                             to_date(split_part(x.week_period,'-',1),'dd.mm.YYYY') = '{date_booking_dict['date_start']}'::date 
                                             and to_date(split_part(x.week_period,'-',2),'dd.mm.YYYY') = '{date_booking_dict['date_end']}'::date 
                                 )
+                                , limit_per_equipment as (
+                                select date_booking, e.id ,  max(e.count_samples) - sum(x.count_analyses) can_use
+									from projects_booking x
+									left join equipment e on e.id = x.equipment_id 
+									where x.date_booking between '{date_booking_dict['date_start']}'::date 
+                                                                            and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    group by date_booking, e.id 
+                                )
                                 , limit_exec_per_day as (
                                     select x.date_booking, x.executor_id, max(le.limit_executor) lim , count(distinct equipment_id) cc
                                     from projects_booking x
@@ -480,7 +488,8 @@ class UserBookingService:
                                 , v.operator_id::text
                                 , z.count_samples samples_limit_per_analyze
                                 , coalesce(ul_per_day.used_limit,0) used_limit_per_day
-                                , z.count_samples - coalesce(ul_per_day.used_limit,0) limit_have_per_day
+                                , LEAST(coalesce(lpe.can_use, eq.count_samples),
+                                		z.count_samples - coalesce(ul_per_day.used_limit,0)) limit_have_per_day
                                 , v.is_priority
                             FROM generate_series(
                                 DATE '{date_booking_dict['date_start']}'::date, -- Начальная дата
@@ -515,6 +524,7 @@ class UserBookingService:
                             right join days_employes de on de.d = EXTRACT(DOW from date::DATE) and de.executor_id = v.operator_id
                             left join limit_exec_per_day led on date::DATE = led.date_booking and ex.id = led.executor_id
                             left join equip_exec_use led_ex on date::DATE = led_ex.date_booking and ex.id = led_ex.executor_id and led_ex.equipment_id  = v.equipment_id
+                            left join limit_per_equipment lpe on lpe.date_booking = date::DATE and v.equipment_id = lpe.id
                     where status = 'active' 
                         {blocking_element} and y.id = '{uuids_json['user_id']}'  
                         and bl.id is null 
@@ -525,6 +535,8 @@ class UserBookingService:
                         and {uuids_json['analyze_val']}
                         and {uuids_json['equipment_val']}
                         and {uuids_json['operator_val']}
+                        and LEAST(coalesce(lpe.can_use, eq.count_samples),
+                                		z.count_samples - coalesce(ul_per_day.used_limit,0)) > 0
                         order by date::DATE, v.is_priority desc
                        """)
         availible_values = await db.execute(new_values_query)
