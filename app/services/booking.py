@@ -456,7 +456,7 @@ class UserBookingService:
                                   ,used_limits_analese_equipment_per_day as (
 		                                    select date_booking, analyse_id ,equipment_id ,sum(count_analyses) used_limit
 		                                    from projects_booking
-		                                    where {blocking_element} project_id = '{uuids_json['user_id']}' and
+		                                    where -----{blocking_element} project_id = '{uuids_json['user_id']}' and
                                                  date_booking between '{date_booking_dict['date_start']}'::date 
                                                 and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
 		                                    group by analyse_id ,equipment_id, date_booking
