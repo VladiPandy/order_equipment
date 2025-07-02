@@ -138,15 +138,16 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     """
     Модель для представления окна открытого заказа
     """
-    # START_DATE_CHOICES = [
-    #     ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
-    #      (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
-    #     for i in range(0, 21)
-    # ]
+    START_DATE_CHOICES = [
+        ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
+         (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
+        for i in range(0, 21)
+    ]
     # start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES
     #                               ,verbose_name='Дата открытия записи')
     start_date: models.CharField = models.CharField(
         max_length=200,
+        choices = START_DATE_CHOICES,
         validators=[validate_start_date],
         verbose_name='Дата открытия записи',
         help_text='Можно выбрать только дату из ближайших 21 дня',
