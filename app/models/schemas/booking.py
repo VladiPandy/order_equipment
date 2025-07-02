@@ -77,6 +77,7 @@ class CreateBookingResponse(BaseModel):
     id: int
 
 class PossibleChangesRequest(BaseBookingRequest):
+    end: str
     id: int
 
 class PossibleChangesResponse(BaseModel):

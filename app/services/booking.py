@@ -311,7 +311,11 @@ class UserBookingService:
                                      uuids_json,
                                      date_booking_dict,
                                      blocking_element,
-                                     filter_elem
+                                     filter_elem,
+                                     blocking_element_admin,
+                                     booking_id,
+                                     admin_booking_date,
+                                     blocking_element_admin_2
                                 ) -> None:
         new_values_query = text(f"""
                              with limit_exec as
@@ -327,6 +331,7 @@ class UserBookingService:
 									left join equipment e on e.id = x.equipment_id 
 									where x.date_booking between '{date_booking_dict['date_start']}'::date 
                                                                             and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by date_booking, e.id 
                                 )
                                 , limit_exec_per_day as (
@@ -335,6 +340,7 @@ class UserBookingService:
                                     left join limit_exec le on x.executor_id = le.executor_id
                                     where x.date_booking between '{date_booking_dict['date_start']}'::date 
                                                                             and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by x.date_booking, x.executor_id
                                     having  max(le.limit_executor) <= count(distinct equipment_id)
                                 )
@@ -526,7 +532,8 @@ class UserBookingService:
                             left join equip_exec_use led_ex on date::DATE = led_ex.date_booking and ex.id = led_ex.executor_id and led_ex.equipment_id  = v.equipment_id
                             left join limit_per_equipment lpe on lpe.date_booking = date::DATE and v.equipment_id = lpe.id
                     where status = 'active' 
-                        {blocking_element} and y.id = '{uuids_json['user_id']}'  
+                        {blocking_element} and y.id = '{uuids_json['user_id']}' 
+                        {blocking_element_admin_2} and date::DATE = to_date('{admin_booking_date}','dd.mm.YYYY')
                         and bl.id is null 
                             and (coalesce(z.count_samples,0) - coalesce(ul_per_day.used_limit,0)) {filter_elem} 0
                             and (coalesce(x.limit_samples,0) - coalesce(ul.used_limit,0))  {filter_elem} 0
@@ -575,7 +582,10 @@ class UserBookingService:
         limit_sample_value = limit_sample.fetchone()
 
         logger.debug(f"Общее ограничение для {uuids_json['user_id']}: %s", limit_sample_value)
-
+        print('list_block_values')
+        print(list_availible_values)
+        print(list_block_values)
+        print(limit_sample_value[0])
         return list_availible_values, list_block_values, limit_sample_value[0]
 
     @staticmethod
@@ -680,7 +690,11 @@ class UserBookingService:
                                             uuids_json,
                                             date_booking_dict,
                                             '',
-                                            '>'
+                                            '>',
+                                            '-------',
+                                            None,
+                                            None,
+                                             '-------'
                                             )
 
         if not list_availible_values:
@@ -917,6 +931,7 @@ class UserBookingService:
                LIMIT 1
            """)
 
+
         result = await db.execute(query, {
             "booking_id": request_dict['id']
             # "date_start" : date_booking_dict['date_start'],
@@ -934,23 +949,37 @@ class UserBookingService:
 
         request_dict['certian_date'] = date_booking
 
+        print('request_data')
+        print(request_dict.get('end') is None)
+
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
         request_dict['date_booking'] = date_booking.strftime('%d.%m.%Y')
         request_dict['analyze_id'] = analyse_id
 
+        if request_dict.get('end'):
+            request_dict['admin_booking_date'] = request_dict['end']
+        else:
+            request_dict['admin_booking_date'] = '29.09.1999'
+
         uuids_json = await UserBookingService.get_uuids(db, user.username,
                                                         request_dict)
 
         logger.debug("UUIDs для изменения: %s", uuids_json)
+
+        blocking_elem = '-----' if request_dict['admin_booking_date']=='29.09.1999' else ''
 
         list_availible_values,list_block_values, limit_sample_value \
             = await UserBookingService.availible_values(db,
                   uuids_json,
                   date_booking_dict,
                   '-----',
-                  '>='
+                  '>=',
+                  '',
+                  request_dict['id'],
+                  request_dict['admin_booking_date'],
+                  blocking_elem
                   )
 
         if not list_availible_values:
@@ -1020,7 +1049,7 @@ class UserBookingService:
                     equipment=equipment_json,
                     executor=executor_json,
                     is_priority=is_priority_json,
-                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]) + int(row[-3]),
+                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]),
                     samples_used = const_samples_used_per_day,
                     status={
                                 # '0': 'Не выбран',

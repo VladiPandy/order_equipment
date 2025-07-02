@@ -118,7 +118,8 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
          (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
         for i in range(0, 21)
     ]
-    start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES, verbose_name='Дата открытия записи')
+    start_date = models.CharField(max_length=200, #choices=START_DATE_CHOICES
+                                  verbose_name='Дата открытия записи')
     TIME_CHOICES = [
         (f"{hour:02d}:00", f"{hour:02d}:00") for hour in range(0, 25)
     ]
