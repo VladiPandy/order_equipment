@@ -350,6 +350,7 @@ class UserBookingService:
 							            from projects_booking x
 							        where x.date_booking between '{date_booking_dict['date_start']}'::date 
                                                                             and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by x.date_booking, x.executor_id, x.equipment_id
                                 )
                                 ,days_employes as 
@@ -435,6 +436,7 @@ class UserBookingService:
                                     from projects_booking
                                     where date_booking between '{date_booking_dict['date_start']}'::date 
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by date_booking, executor_id 
                                 )
                                 ,equipment_limit as (
@@ -442,6 +444,7 @@ class UserBookingService:
                                     from projects_booking
                                     where date_booking between '{date_booking_dict['date_start']}'::date 
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by date_booking, equipment_id 
                                 )
                                 ,used_limits_equipment as (
@@ -450,6 +453,7 @@ class UserBookingService:
                                     where {blocking_element} project_id = '{uuids_json['user_id']}' and
                                          date_booking between '{date_booking_dict['date_start']}'::date 
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by equipment_id 
                                 )
                                 ,used_limits_analese as (
@@ -458,6 +462,7 @@ class UserBookingService:
                                     where {blocking_element} project_id = '{uuids_json['user_id']}' and
                                          date_booking between '{date_booking_dict['date_start']}'::date 
                                         and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                    {blocking_element_admin} and x.id != {booking_id}
                                     group by analyse_id 
                                 )
                                   ,used_limits_analese_equipment_per_day as (
@@ -466,6 +471,7 @@ class UserBookingService:
 		                                    where -----{blocking_element} project_id = '{uuids_json['user_id']}' and
                                                  date_booking between '{date_booking_dict['date_start']}'::date 
                                                 and '{date_booking_dict['date_end']}'::date and (is_delete = False and status != 'Отклонено')
+                                            {blocking_element_admin} and x.id != {booking_id}
 		                                    group by analyse_id ,equipment_id, date_booking
 		                                )
                                 ,blocking_list as
@@ -1014,7 +1020,7 @@ class UserBookingService:
             samples_per_day.append(val[-2])
             samples_used_per_day.append(val[-3])
 
-        const_samples_limit = int(list(set(samples_list))[0])
+        #const_samples_limit = int(list(set(samples_list))[0])
         const_samples_used = int(list(set(samples_used))[0])
 
 
