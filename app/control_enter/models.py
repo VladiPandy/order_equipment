@@ -3,7 +3,7 @@ import uuid
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from basic_elements.models import *
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -108,18 +108,50 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
 
     formatted_working_days.short_description = 'Рабочие дни'
 
+def gen_start_date_choices(days_ahead: int = 21):
+    """
+    Возвращает список кортежей вида ('dd.mm.YYYY', 'dd.mm.YYYY') на
+    `days_ahead` дней вперёд от сегодняшней даты.
+    """
+    today: date = date.today()
+    return [
+        (
+            (today + timedelta(days=i)).strftime('%d.%m.%Y'),
+            (today + timedelta(days=i)).strftime('%d.%m.%Y'),
+        )
+        for i in range(days_ahead)
+    ]
+
+
+def validate_start_date(value: str):
+    """
+    Валидатор, запрещающий сохранять в `start_date` дату,
+    выходящую за пределы динамического диапазона (21 день вперёд).
+    """
+    allowed = {v for v, _ in gen_start_date_choices(21)}
+    if value not in allowed:
+        raise ValidationError(
+            'Дата вне допустимого диапазона: выберите дату из списка.')
+
 
 class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     """
     Модель для представления окна открытого заказа
     """
-    START_DATE_CHOICES = [
-        ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
-         (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
-        for i in range(0, 21)
-    ]
-    start_date = models.CharField(max_length=200, #choices=START_DATE_CHOICES
-                                  verbose_name='Дата открытия записи')
+    # START_DATE_CHOICES = [
+    #     ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
+    #      (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
+    #     for i in range(0, 21)
+    # ]
+    # start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES
+    #                               ,verbose_name='Дата открытия записи')
+    start_date: models.CharField = models.CharField(
+        max_length=200,
+        validators=[validate_start_date],
+        verbose_name='Дата открытия записи',
+        help_text='Можно выбрать только дату из ближайших 21 дня',
+    )
+
     TIME_CHOICES = [
         (f"{hour:02d}:00", f"{hour:02d}:00") for hour in range(0, 25)
     ]
