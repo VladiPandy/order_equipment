@@ -315,7 +315,8 @@ class UserBookingService:
                                      blocking_element_admin,
                                      booking_id,
                                      admin_booking_date,
-                                     blocking_element_admin_2
+                                     blocking_element_admin_2,
+                                     project_id
                                 ) -> None:
         new_values_query = text(f"""
                              with limit_exec as
@@ -575,6 +576,7 @@ class UserBookingService:
                         left join "analyze" a on a.id = x.analazy_n_id
                         left join total_use y on x.analazy_n_id = y.analyse_id
                         {blocking_element}  where x.project_n_id = '{uuids_json['user_id']}'
+                        {blocking_element_admin}  where x.project_n_id = '{project_id}'
                         and {uuids_json['analyze_val']}
                         and coalesce(x.limit_samples,0) - coalesce(y.used_limit,0) >= 0
                             """
@@ -582,10 +584,6 @@ class UserBookingService:
         limit_sample_value = limit_sample.fetchone()
 
         logger.debug(f"Общее ограничение для {uuids_json['user_id']}: %s", limit_sample_value)
-        print('list_block_values')
-        print(list_availible_values)
-        print(list_block_values)
-        print(limit_sample_value[0])
         return list_availible_values, list_block_values, limit_sample_value[0]
 
     @staticmethod
@@ -694,7 +692,8 @@ class UserBookingService:
                                             '-------',
                                             None,
                                             None,
-                                             '-------'
+                                             '-------',
+                                            ''
                                             )
 
         if not list_availible_values:
@@ -759,10 +758,6 @@ class UserBookingService:
         const_samples_used = int(list(set(samples_used))[0])
         const_samples_limit_per_day = max(map(int,list(set(samples_per_day))))
         const_samples_used_per_day = max(map(int, list(set(samples_used_per_day))))
-
-        print('const_samples_limit')
-        print(samples_list)
-        print(samples_used)
 
         samples_limit = limit_sample_value if len(list(set(dates_list))) > 1 else const_samples_limit_per_day
         samples_used = const_samples_used if len(list(set(dates_list))) > 1 else const_samples_used_per_day
@@ -949,9 +944,6 @@ class UserBookingService:
 
         request_dict['certian_date'] = date_booking
 
-        print('request_data')
-        print(request_dict.get('end') is None)
-
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
 
@@ -979,7 +971,8 @@ class UserBookingService:
                   '',
                   request_dict['id'],
                   request_dict['admin_booking_date'],
-                  blocking_elem
+                  blocking_elem,
+                  project_id
                   )
 
         if not list_availible_values:
@@ -1024,9 +1017,13 @@ class UserBookingService:
         const_samples_limit = int(list(set(samples_list))[0])
         const_samples_used = int(list(set(samples_used))[0])
 
+
         const_samples_limit_per_day = max(map(int, list(set(samples_per_day))))
         const_samples_used_per_day = max(
             map(int, list(set(samples_used_per_day))))
+
+        samples_limit = limit_sample_value if request_dict['admin_booking_date'] == '29.09.1999' else const_samples_limit_per_day
+        samples_used = const_samples_used if request_dict['admin_booking_date'] == '29.09.1999' else const_samples_used_per_day
 
         if limit_sample_value < 0:
             raise HTTPException(status_code=403,
@@ -1049,8 +1046,8 @@ class UserBookingService:
                     equipment=equipment_json,
                     executor=executor_json,
                     is_priority=is_priority_json,
-                    samples_limit=min([const_samples_limit_per_day,limit_sample_value]),
-                    samples_used = const_samples_used_per_day,
+                    samples_limit=min([samples_limit,limit_sample_value]),
+                    samples_used = samples_used,
                     status={
                                 # '0': 'Не выбран',
                                 "start": 'На рассмотрении',
