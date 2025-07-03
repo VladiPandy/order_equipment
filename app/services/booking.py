@@ -575,6 +575,7 @@ class UserBookingService:
                                 x.date_booking between '{date_booking_dict['date_start']}'::date 
                                 and '{date_booking_dict['date_end']}'::date and (x.is_delete = False and x.status != 'Отклонено')
                                 and {uuids_json['analyze_val']}
+                                {blocking_element_admin} and x.id != {booking_id}
                             group by analyse_id    
                         )          
                         select sum(coalesce(x.limit_samples,0)) - sum(coalesce(y.used_limit,0)) sum_total
@@ -986,6 +987,9 @@ class UserBookingService:
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
+        print(list_availible_values)
+        print(list_block_values)
+        print(limit_sample_value)
         projects_json = {}
         date_json = {}
         analyze_json = {}
