@@ -74,6 +74,7 @@ class IsOpenRegistrationAdmin(admin.ModelAdmin):
                 for i in range(12)
             ]
             kwargs['choices'] = choices
+            return db_field.formfield(**kwargs)
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(OpenWindowForOrdering,site=custom_admin_site)
@@ -86,12 +87,8 @@ class OpenWindowForOrderingAdmin(admin.ModelAdmin):
                 for i in range(0, 21)
             ]
             # kwargs['choices'] = start_date_choices
-            return forms.ChoiceField(
-                choices=start_date_choices,
-                label=db_field.verbose_name,
-                help_text=db_field.help_text,
-                required=not db_field.blank,
-            ).formfield()
+            kwargs['choices'] = start_date_choices
+            return db_field.formfield(**kwargs)
         if db_field.name == "week_period":
             today = datetime.today()
             # Определяем понедельник текущей недели.
@@ -105,13 +102,8 @@ class OpenWindowForOrderingAdmin(admin.ModelAdmin):
                 )
                 for i in range(12)
             ]
-            # kwargs['choices'] = choices
-            return forms.ChoiceField(
-                choices=choices,
-                label=db_field.verbose_name,
-                help_text=db_field.help_text,
-                required=not db_field.blank,
-            ).formfield()
+            kwargs['choices'] = choices
+            return db_field.formfield(**kwargs)
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(WorkerWeekStatus,site=custom_admin_site)
