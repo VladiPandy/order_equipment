@@ -148,7 +148,7 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     start_date: models.CharField = models.CharField(
         max_length=200,
         #choices = START_DATE_CHOICES,
-        validators=[validate_start_date],
+        #validators=[validate_start_date],
         verbose_name='Дата открытия записи',
         help_text='Можно выбрать только дату из ближайших 21 дня',
     )
