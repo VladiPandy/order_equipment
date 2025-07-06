@@ -9,7 +9,7 @@ import { globalPost } from '../../api/globalFetch'
 import { endPoints } from '../../api/endPoints'
 import { Loader } from '../../ui/Loader'
 
-import {Statuses} from '../../const'
+import {Statuses_2} from '../../const'
 
 type EditModalProps = {
     onClose: () => void
