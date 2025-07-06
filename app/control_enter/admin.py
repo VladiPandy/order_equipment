@@ -5,6 +5,7 @@ from .models import WorkingDayOfWeek, IsOpenRegistration, OpenWindowForOrdering,
 from user_auth.custom_admin import custom_admin_site
 from django.http import HttpResponseRedirect
 from django.core.exceptions import ValidationError
+from django import forms
 
 @admin.register(WorkingDayOfWeek,site=custom_admin_site)
 class WorkingDayOfWeekAdmin(admin.ModelAdmin):
@@ -84,7 +85,13 @@ class OpenWindowForOrderingAdmin(admin.ModelAdmin):
                  (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
                 for i in range(0, 21)
             ]
-            kwargs['choices'] = start_date_choices
+            # kwargs['choices'] = start_date_choices
+            return forms.ChoiceField(
+                choices=start_date_choices,
+                label=db_field.verbose_name,
+                help_text=db_field.help_text,
+                required=not db_field.blank,
+            ).formfield()
         if db_field.name == "week_period":
             today = datetime.today()
             # Определяем понедельник текущей недели.
@@ -98,7 +105,13 @@ class OpenWindowForOrderingAdmin(admin.ModelAdmin):
                 )
                 for i in range(12)
             ]
-            kwargs['choices'] = choices
+            # kwargs['choices'] = choices
+            return forms.ChoiceField(
+                choices=choices,
+                label=db_field.verbose_name,
+                help_text=db_field.help_text,
+                required=not db_field.blank,
+            ).formfield()
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 @admin.register(WorkerWeekStatus,site=custom_admin_site)

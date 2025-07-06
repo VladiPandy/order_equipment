@@ -10,6 +10,7 @@ import { endPoints } from '../../api/endPoints'
 import { Loader } from '../../ui/Loader'
 
 import {Statuses_2} from '../../const'
+import {Statuses} from '../../const'
 
 type EditModalProps = {
     onClose: () => void
@@ -204,7 +205,7 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
                 />
                 <Input 
                     placeholder={'Статус'} 
-                    options={Statuses} 
+                    options={Statuses_2}
                     title={'Статус'} 
                     isRequired={true}
                     value={[status]}
