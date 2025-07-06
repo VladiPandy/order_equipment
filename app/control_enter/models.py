@@ -25,10 +25,30 @@ def get_week_period_choices():
             (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
             (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
         )
-        for i in range(12)
+        for i in range(500)
     ]
     return choices
 
+def _get_week_period_choices():
+    """
+    Функция возвращает список кортежей с выбором периода недели с понедельника по воскресенье
+    на 12 недель вперед. Каждый кортеж имеет вид (значение, отображаемое значение).
+
+    :return: Список кортежей с периодами недели в формате 'dd.mm.yyyy-dd.mm.yyyy'
+    """
+    today = datetime.today()
+    # Определяем понедельник текущей недели.
+    current_monday = today - timedelta(days=today.weekday())
+    choices = [
+        (
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y'),
+            (current_monday + timedelta(days=i * 7)).strftime('%d.%m.%Y') + '-' +
+            (current_monday + timedelta(days=i * 7 + 6)).strftime('%d.%m.%Y')
+        )
+        for i in range(20)
+    ]
+    return choices
 
 class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     """
@@ -133,6 +153,13 @@ def validate_start_date(value: str):
         raise ValidationError(
             'Дата вне допустимого диапазона: выберите дату из списка.')
 
+def _gen_start_date_choices(days: int = 21) -> list[tuple[str, str]]:
+    START_DATE_CHOICES = [
+        ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
+         (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
+        for i in range(0, days)
+    ]
+    return START_DATE_CHOICES
 
 class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     """
@@ -141,13 +168,13 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     START_DATE_CHOICES = [
         ((datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'),
          (datetime.today() + timedelta(days=i)).strftime('%d.%m.%Y'))
-        for i in range(0, 21)
+        for i in range(0, 600)
     ]
     # start_date = models.CharField(max_length=200, choices=START_DATE_CHOICES
     #                               ,verbose_name='Дата открытия записи')
     start_date: models.CharField = models.CharField(
         max_length=200,
-        #choices = START_DATE_CHOICES,
+        choices = START_DATE_CHOICES,
         #validators=[validate_start_date],
         verbose_name='Дата открытия записи',
         help_text='Можно выбрать только дату из ближайших 21 дня',
