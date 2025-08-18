@@ -71,6 +71,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий день недели'
         verbose_name_plural = 'Рабочие дни недели'
+        ordering = ['week_period']
 
     def clean(self) -> None:
         """
@@ -197,6 +198,7 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     class Meta:
         verbose_name = 'Окно для заказа'
         verbose_name_plural = 'Окна для заказа'
+        ordering = ['start_date','end_time']
 
     def __str__(self):
         return (
@@ -242,6 +244,7 @@ class IsOpenRegistration(UUIDMixin, TimeStampedMixin):
     class Meta:
         verbose_name = 'Статус открытой регистрации'
         verbose_name_plural = 'Статусы открытой регистрации'
+        ordering = ['week_period']
 
     def __str__(self):
         return ("Открыта" if self.is_open else "Закрыта") + f" период недели: {self.week_period}"
@@ -282,6 +285,7 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий график сотрудника'
         verbose_name_plural = 'Рабочие графики сотрудников'
+        ordering = ['week_period','executor']
 
     def clean(self) -> None:
         """

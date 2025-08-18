@@ -49,6 +49,7 @@ class Equipment(UUIDMixin,TimeStampedMixin):
         # Следующие два поля отвечают за название модели в интерфейсе
         verbose_name = 'Прибор'
         verbose_name_plural = 'Приборы'
+        ordering = ['name']
 
     def __str__(self):
         return f"{self.name}"
@@ -83,6 +84,7 @@ class AnalyzeType(UUIDMixin, TimeStampedMixin):
         # Следующие два поля отвечают за название модели в интерфейсе
         verbose_name = 'Тип анализа'
         verbose_name_plural = 'Типы анализа'
+        ordering = ['type']
 
     def __str__(self):
         return f"{self.type}"
@@ -119,6 +121,7 @@ class Analyze(UUIDMixin, TimeStampedMixin):
         # Следующие два поля отвечают за название модели в интерфейсе
         verbose_name = 'Анализ'
         verbose_name_plural = 'Анализы'
+        ordering = ['analyze_name','analyze_type']
 
     def __str__(self):
         return f"{self.analyze_name} : {self.analyze_type}"
@@ -155,6 +158,7 @@ class Executor(UUIDMixin, TimeStampedMixin):
         # Следующие два поля отвечают за название модели в интерфейсе
         verbose_name = 'Исполнитель'
         verbose_name_plural = 'Исполнители'
+        ordering = ['last_name', 'first_name','patronymic']
 
     def __str__(self):
         return f"{self.last_name}  {self.first_name}  {self.patronymic}"
@@ -201,6 +205,7 @@ class Adminstrator(UUIDMixin, TimeStampedMixin):
         db_table = 'public"."adminstrator'
         verbose_name = 'Администратор'
         verbose_name_plural = 'Администраторы'
+        ordering = ['admin_nick', 'admin_person']
 
     def __str__(self):
         return f"Администратор {self.admin_person}"
