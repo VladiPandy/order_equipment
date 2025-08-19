@@ -59,6 +59,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
         choices=get_week_period_choices(),
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
+    period_start = models.DateField(editable=False, null=True)
 
     monday = models.BooleanField(default=False, verbose_name='Понедельник')
     tuesday = models.BooleanField(default=False, verbose_name='Вторник')
@@ -71,7 +72,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий день недели'
         verbose_name_plural = 'Рабочие дни недели'
-        ordering = ['week_period']
+        ordering = ['period_start']
 
     def clean(self) -> None:
         """
@@ -89,6 +90,9 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
                     f"Период {self.week_period} уже существует. Должна быть только один период."
                 )
     def save(self, *args, **kwargs):
+        start_str = self.week_period.split("-")[0]
+        self.period_start = datetime.strptime(start_str.strip(), "%d.%m.%Y").date()
+
         self.full_clean()  # Вызов clean() перед сохранением
         super().save(*args, **kwargs)
 
@@ -306,7 +310,7 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
                 )
     def save(self, *args, **kwargs):
         start_str = self.week_period.split("-")[0]
-        self.period_start = datetime.strftime(start_str,"%d.%m.%Y").date()
+        self.period_start = datetime.strptime(start_str.strip(), "%d.%m.%Y").date()
 
         self.full_clean()  # Вызов clean() перед сохранением
         super().save(*args, **kwargs)
