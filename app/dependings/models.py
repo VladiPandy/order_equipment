@@ -33,7 +33,7 @@ class OperatorPerEquipment(models.Model):
     class Meta:
         verbose_name = 'Исполнитель/Прибор'
         verbose_name_plural = 'Исполнители/Приборы'
-        ordering = ['equipment', 'operator']
+        ordering = ['operator', 'equipment']
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Вызов clean() перед сохранением
@@ -56,7 +56,7 @@ class AnalyzePerEquipment(models.Model):
     class Meta:
         verbose_name = 'Анализы/Прибор'
         verbose_name_plural = 'Анализы/Приборы'
-        ordering = ['equipment_name', 'analazy']
+        ordering = ['analazy', 'equipment_name']
 
     def clean(self) -> None:
         """
@@ -109,7 +109,7 @@ class ProjectPerAnalyze(models.Model):
     class Meta:
         verbose_name = 'Анализ/Проект'
         verbose_name_plural = 'Анализы/Проекты'
-        ordering = ['project_n', 'analazy_n']
+        ordering = ['analazy_n', 'project_n']
 
     def __str__(self):
         return f"{self.analazy_n} - {self.project_n}"

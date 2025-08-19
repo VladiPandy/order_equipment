@@ -268,6 +268,8 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
         verbose_name='Период недели (с понедельника по воскресенье)'
     )
 
+    period_start = models.DateField(editable=False, null=True)
+
     executor = models.ForeignKey(Executor, on_delete=models.CASCADE, verbose_name='Исполнитель', related_name='executor')
     monday = models.CharField(default='Работает', verbose_name='Понедельник', choices=STATUS_WORKING)
     tuesday = models.CharField(default='Работает', verbose_name='Вторник', choices=STATUS_WORKING)
@@ -285,7 +287,7 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий график сотрудника'
         verbose_name_plural = 'Рабочие графики сотрудников'
-        ordering = ['week_period','executor']
+        ordering = ['period_start','executor']
 
     def clean(self) -> None:
         """
@@ -303,6 +305,9 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
                     f"Период {self.week_period} уже существует для исполнителя {self.executor}. Должна быть только один период."
                 )
     def save(self, *args, **kwargs):
+        start_str = self.week_period.split("-")[0]
+        self.period_start = datetime.strftime(start_str,"%d.%m.%Y").date()
+
         self.full_clean()  # Вызов clean() перед сохранением
         super().save(*args, **kwargs)
 

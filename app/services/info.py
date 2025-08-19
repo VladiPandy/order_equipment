@@ -276,61 +276,142 @@ class UserInfoService:
         
         date_booking_dict = await UserBookingService.validate_date_booking(
             request_dict)
-
         # Формируем запрос в зависимости от роли пользователя
 
         if user.is_staff:
-            query = text("""
-                        select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
-                            , max(case 
-			when cew.monday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 1 and cew.monday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as monday
-                            ,  max(case 
-	                            when cew.tuesday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 2 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 2 and cew.tuesday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as tuesday
-                            ,  max(case 
-	                            when cew.wednesday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 3 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 3 and cew.wednesday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as wednesday
-                            ,  max(case 
-	                            when cew.thursday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 4 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 4 and cew.thursday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as thursday
-                            ,  max(case 
-	                            when cew.friday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 5 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 5 and cew.friday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as friday
-                            ,  max(case 
-	                            when cew.saturday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 6 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 6 and cew.saturday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as saturday
-                            ,  max(case 
-	                            when cew.sunday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 0 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 0 and cew.sunday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as sunday
+            query = text(f"""
+                        with monday as (
+                        SELECT
+                            e.id
+                            , concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as monday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
                         from executor e 
                         left join projects_booking pb on pb.executor_id = e.id 
-                        left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
                         left join "analyze" a  on a.id = pb.analyse_id  
-                        where pb.is_delete = false
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 1
                         and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),tuesday as (
+                        SELECT
+                            e.id
+                            ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as tuesday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 2
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),wednesday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as wednesday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 3
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),thursday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as thursday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 4
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),friday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as friday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 5
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),saturday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as saturday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 6
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),sunday as (
+                        SELECT
+                        e.id
+                            ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as sunday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 0
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    )
+                    select coalesce(monday.fio,tuesday.fio,wednesday.fio,thursday.fio,friday.fio,saturday.fio,sunday.fio) fio
+                        , case 
+                            when cew.monday = 'Выходной' then 'Выходной'
+                            else coalesce(monday.monday,'')
+                         end monday
+                         , case 
+                            when cew.tuesday = 'Выходной' then 'Выходной'
+                            else coalesce(tuesday.tuesday,'')
+                         end tuesday
+                         , case 
+                            when cew.wednesday = 'Выходной' then 'Выходной'
+                            else coalesce(wednesday.wednesday,'')
+                         end wednesday
+                         , case 
+                            when cew.thursday = 'Выходной' then 'Выходной'
+                            else coalesce(thursday.thursday,'')
+                         end thursday
+                         , case 
+                            when cew.friday = 'Выходной' then 'Выходной'
+                            else coalesce(friday.friday,'')
+                         end friday
+                         , case 
+                            when cew.saturday = 'Выходной' then 'Выходной'
+                            else coalesce(saturday.saturday,'')
+                         end saturday
+                         , case 
+                            when cew.sunday = 'Выходной' then 'Выходной'
+                            else coalesce(sunday.sunday,'')
+                         end sunday
+                    from monday
+                    full join tuesday USING(fio,rn)
+                    full join wednesday USING(fio,rn)
+                    full join thursday USING(fio,rn)
+                    full join friday USING(fio,rn)
+                    full join saturday USING(fio,rn)
+                    full join sunday USING(fio,rn)
+                    left join control_enter_workerweekstatus cew on coalesce(monday.id,tuesday.id,wednesday.id,thursday.id,friday.id,saturday.id,sunday.id) = cew.executor_id
+                        and  cew.week_period = '{request_dict['start']}-{request_dict['end']}'
+                    order by coalesce(monday.fio,tuesday.fio,wednesday.fio,thursday.fio,friday.fio,saturday.fio,sunday.fio)
+                    , monday.rn,tuesday.rn,wednesday.rn,thursday.rn,friday.rn,saturday.rn,sunday.rn
                     """)
             params = {"start_date": date_booking_dict['date_start'],
                       "end_date": date_booking_dict['date_end']}
@@ -434,57 +515,139 @@ class UserInfoService:
         date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
 
         if user.is_staff:
-            query = text("""
-                select concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) fio
-                            , max(case 
-			when cew.monday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 1 and cew.monday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as monday
-                            ,  max(case 
-	                            when cew.tuesday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 2 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 2 and cew.tuesday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as tuesday
-                            ,  max(case 
-	                            when cew.wednesday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 3 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 3 and cew.wednesday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as wednesday
-                            ,  max(case 
-	                            when cew.thursday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 4 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 4 and cew.thursday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as thursday
-                            ,  max(case 
-	                            when cew.friday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 5 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 5 and cew.friday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as friday
-                            ,  max(case 
-	                            when cew.saturday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 6 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 6 and cew.saturday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as saturday
-                            ,  max(case 
-	                            when cew.sunday = 'Выходной' then 'Выходной'
-                                when date_part('dow', pb.date_booking::date) = 0 and a.analyze_name is not null then a.analyze_name
-                                when date_part('dow', pb.date_booking::date) = 0 and cew.sunday = 'Выходной' then 'Выходной'
-                                else ''
-                            end) as sunday
+            query = text(f"""
+                with monday as (
+                        SELECT
+                            e.id
+                            , concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as monday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
                         from executor e 
                         left join projects_booking pb on pb.executor_id = e.id 
-                        left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
                         left join "analyze" a  on a.id = pb.analyse_id  
-                        where pb.is_delete = false
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 1
                         and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), coalesce(a.analyze_name,'')
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),tuesday as (
+                        SELECT
+                            e.id
+                            ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as tuesday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 2
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),wednesday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as wednesday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 3
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),thursday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as thursday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 4
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),friday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as friday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 5
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),saturday as (
+                        SELECT
+                        e.id
+                        ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as saturday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 6
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    ),sunday as (
+                        SELECT
+                        e.id
+                            ,concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) fio
+                            , max(a.analyze_name) as sunday
+                            , row_number() over(partition by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')) order by a.analyze_name) rn
+                        from executor e 
+                        left join projects_booking pb on pb.executor_id = e.id 
+                        ----left join control_enter_workerweekstatus cew on e.id = cew.executor_id 
+                        left join "analyze" a  on a.id = pb.analyse_id  
+                        where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 0
+                        and pb.date_booking BETWEEN :start_date AND :end_date
+                        group by concat(e.last_name,e.first_name,coalesce(e.patronymic,'')), a.analyze_name, e.id
+                    )
+                    select coalesce(monday.fio,tuesday.fio,wednesday.fio,thursday.fio,friday.fio,saturday.fio,sunday.fio) fio
+                        , case 
+                            when cew.monday = 'Выходной' then 'Выходной'
+                            else coalesce(monday.monday,'')
+                         end monday
+                         , case 
+                            when cew.tuesday = 'Выходной' then 'Выходной'
+                            else coalesce(tuesday.tuesday,'')
+                         end tuesday
+                         , case 
+                            when cew.wednesday = 'Выходной' then 'Выходной'
+                            else coalesce(wednesday.wednesday,'')
+                         end wednesday
+                         , case 
+                            when cew.thursday = 'Выходной' then 'Выходной'
+                            else coalesce(thursday.thursday,'')
+                         end thursday
+                         , case 
+                            when cew.friday = 'Выходной' then 'Выходной'
+                            else coalesce(friday.friday,'')
+                         end friday
+                         , case 
+                            when cew.saturday = 'Выходной' then 'Выходной'
+                            else coalesce(saturday.saturday,'')
+                         end saturday
+                         , case 
+                            when cew.sunday = 'Выходной' then 'Выходной'
+                            else coalesce(sunday.sunday,'')
+                         end sunday
+                    from monday
+                    full join tuesday USING(fio,rn)
+                    full join wednesday USING(fio,rn)
+                    full join thursday USING(fio,rn)
+                    full join friday USING(fio,rn)
+                    full join saturday USING(fio,rn)
+                    full join sunday USING(fio,rn)
+                    left join control_enter_workerweekstatus cew on coalesce(monday.id,tuesday.id,wednesday.id,thursday.id,friday.id,saturday.id,sunday.id) = cew.executor_id
+                        and  cew.week_period = '{request_dict['start']}-{request_dict['end']}'
+                    order by coalesce(monday.fio,tuesday.fio,wednesday.fio,thursday.fio,friday.fio,saturday.fio,sunday.fio)
+                    , monday.rn,tuesday.rn,wednesday.rn,thursday.rn,friday.rn,saturday.rn,sunday.rn
             """)
             params = {"start_date": date_booking_dict['date_start'], "end_date": date_booking_dict['date_end']}
         else:
@@ -576,41 +739,99 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                        select e.name
-                            , max(case 
-                                when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as monday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 2 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as tuesday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 3 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as wednesday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 4 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as thursday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 5 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as friday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 6 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as saturday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 0 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as sunday
-                        from equipment e 
-                        left join projects_booking pb on pb.equipment_id = e.id 
-                        left join "analyze" a  on a.id = pb.analyse_id  
-                        where pb.is_delete = false
-                        and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by e.name, coalesce(a.analyze_name,'')
+                        with monday as (
+                            select e.name
+                                , max(a.analyze_name) as monday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 1
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),tuesday as (
+                            select e.name
+                                , max(a.analyze_name) as tuesday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 2
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),wednesday as (
+                            select e.name
+                                , max(a.analyze_name) as wednesday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 3
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),thursday as (
+                            select e.name
+                                , max(a.analyze_name) as thursday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 4
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),friday as (
+                            select e.name
+                                , max(a.analyze_name) as friday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 5
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),saturday as (
+                            select e.name
+                                , max(a.analyze_name) as saturday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 6
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),sunday as (
+                            select e.name
+                                , max(a.analyze_name) as sunday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 0
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        )
+                        select coalesce(monday.name,tuesday.name,wednesday.name,thursday.name,friday.name,saturday.name,sunday.name) name
+                            , coalesce(monday.monday,'') monday
+                            ,coalesce(tuesday.tuesday,'') tuesday
+                            ,coalesce(wednesday.wednesday,'') wednesday
+                            ,coalesce(thursday.thursday,'') thursday
+                            ,coalesce(friday.friday,'') friday
+                            ,coalesce(saturday.saturday,'') saturday
+                            ,coalesce(sunday.sunday,'') sunday
+                        from monday
+                        full join tuesday USING(name,rn)
+                        full join wednesday USING(name,rn)
+                        full join thursday USING(name,rn)
+                        full join friday USING(name,rn)
+                        full join saturday USING(name,rn)
+                        full join sunday USING(name,rn)
                     """)
             params = {"start_date": date_booking_dict['date_start'],
                       "end_date": date_booking_dict['date_end']}
@@ -697,41 +918,99 @@ class UserInfoService:
 
         if user.is_staff:
             query = text("""
-                select e.name
-                            , max(case 
-                                when date_part('dow', pb.date_booking::date) = 1 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as monday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 2 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as tuesday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 3 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as wednesday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 4 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as thursday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 5 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as friday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 6 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as saturday
-                            ,  max(case 
-                                when date_part('dow', pb.date_booking::date) = 0 and a.analyze_name is not null then a.analyze_name
-                                else ''
-                            end) as sunday
-                        from equipment e 
-                        left join projects_booking pb on pb.equipment_id = e.id 
-                        left join "analyze" a  on a.id = pb.analyse_id  
-                        where pb.is_delete = false
-                        and pb.date_booking BETWEEN :start_date AND :end_date
-                        group by e.name, coalesce(a.analyze_name,'')
+                with monday as (
+                            select e.name
+                                , max(a.analyze_name) as monday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 1
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),tuesday as (
+                            select e.name
+                                , max(a.analyze_name) as tuesday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 2
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),wednesday as (
+                            select e.name
+                                , max(a.analyze_name) as wednesday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 3
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),thursday as (
+                            select e.name
+                                , max(a.analyze_name) as thursday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 4
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),friday as (
+                            select e.name
+                                , max(a.analyze_name) as friday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 5
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),saturday as (
+                            select e.name
+                                , max(a.analyze_name) as saturday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 6
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        ),sunday as (
+                            select e.name
+                                , max(a.analyze_name) as sunday
+                                , row_number() over(partition by e.name order by a.analyze_name) rn
+                            from equipment e 
+                            left join projects_booking pb on pb.equipment_id = e.id 
+                            left join "analyze" a  on a.id = pb.analyse_id  
+                            where pb.is_delete = false and a.analyze_name is not null and date_part('dow', pb.date_booking::date) = 0
+                            and pb.date_booking BETWEEN :start_date AND :end_date
+                            group by e.name, a.analyze_name
+                            order by e.name
+                        )
+                        select coalesce(monday.name,tuesday.name,wednesday.name,thursday.name,friday.name,saturday.name,sunday.name) name
+                            , coalesce(monday.monday,'') monday
+                            ,coalesce(tuesday.tuesday,'') tuesday
+                            ,coalesce(wednesday.wednesday,'') wednesday
+                            ,coalesce(thursday.thursday,'') thursday
+                            ,coalesce(friday.friday,'') friday
+                            ,coalesce(saturday.saturday,'') saturday
+                            ,coalesce(sunday.sunday,'') sunday
+                        from monday
+                        full join tuesday USING(name,rn)
+                        full join wednesday USING(name,rn)
+                        full join thursday USING(name,rn)
+                        full join friday USING(name,rn)
+                        full join saturday USING(name,rn)
+                        full join sunday USING(name,rn)
             """)
             params = {"start_date": date_booking_dict['date_start'], "end_date": date_booking_dict['date_end']}
         else:

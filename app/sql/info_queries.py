@@ -328,7 +328,7 @@ BOOKING_INFO_STAFF = """
     JOIN executor ex ON ex.id = x.executor_id
     WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
     and x.is_delete = False
-    order by y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
+    order by  x.date_booking,y.project_name, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
 """
 
 BOOKING_INFO_USER = """
@@ -345,5 +345,5 @@ BOOKING_INFO_USER = """
 
     WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
     and x.is_delete = False
-    order by y.project_name, x.date_booking, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
+    order by x.date_booking,y.project_name, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
 """
