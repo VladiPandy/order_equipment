@@ -72,7 +72,7 @@ class WorkingDayOfWeek(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий день недели'
         verbose_name_plural = 'Рабочие дни недели'
-        ordering = ['period_start']
+        ordering = ['-period_start']
 
     def clean(self) -> None:
         """
@@ -291,7 +291,7 @@ class WorkerWeekStatus(UUIDMixin,TimeStampedMixin):
     class Meta:
         verbose_name = 'Рабочий график сотрудника'
         verbose_name_plural = 'Рабочие графики сотрудников'
-        ordering = ['period_start','executor']
+        ordering = ['-period_start','executor']
 
     def clean(self) -> None:
         """
