@@ -105,6 +105,7 @@ BEGIN
                 created,
                 modified,
                 week_period,
+                period_start,
                 monday,
                 tuesday,
                 wednesday,
@@ -119,6 +120,7 @@ BEGIN
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 current_week_period,  -- Используем переименованную переменную
+                start_date,
                 'Работает',  -- Пример статуса для понедельника
                 'Работает',  -- Пример статуса для вторника
                 'Работает',  -- Пример статуса для среды
@@ -171,6 +173,7 @@ BEGIN
             created,
             modified,
             week_period,
+            period_start,
             monday,
             tuesday,
             wednesday,
@@ -183,12 +186,13 @@ BEGIN
             CURRENT_TIMESTAMP,
             CURRENT_TIMESTAMP,
             current_week_period,  -- Используем переименованную переменную
+            start_date,
             TRUE,  -- Пример статуса для понедельника
             TRUE,  -- Пример статуса для вторника
             TRUE,  -- Пример статуса для среды
             TRUE,  -- Пример статуса для четверга
             FALSE,  -- Пример статуса для пятницы
-            FALSE,  -- Пример статуса для субботы
+          FALSE,  -- Пример статуса для субботы
             FALSE   -- Пример статуса для воскресенья
         );
         RAISE NOTICE 'Создана запись для недели с % до %', start_date, end_date;
