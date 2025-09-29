@@ -13,11 +13,11 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
-      - ./db/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+      #- ./db/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
       - ./db/backups:/var/lib/postgresql/backups
-      - ./db/backup.sh:/var/lib/postgresql/backup.sh
+      #- ./db/backup.sh:/var/lib/postgresql/backup.sh
       #- ./db/init_backup.sql:/docker-entrypoint-initdb.d/init_backup.sql
-      - ./db/restore.sh:/docker-entrypoint-initdb.d/restore.sh
+      #- ./db/restore.sh:/docker-entrypoint-initdb.d/restore.sh
 
   admin_app:
     build:

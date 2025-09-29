@@ -61,7 +61,7 @@ BEGIN
     SET status = 'Оценить'
     WHERE status = 'Принято'
     AND is_delete = false
-    AND date_booking < now()::date;
+    AND date_booking < (now()::date - interval '24 hours');
     GET DIAGNOSTICS updated_count = ROW_COUNT;
     RAISE NOTICE 'Обновлено % записей', updated_count;
     RETURN updated_count;

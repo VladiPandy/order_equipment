@@ -26,8 +26,8 @@ COPY backup.sh /var/lib/postgresql/backup.sh
 COPY restore.sh /docker-entrypoint-initdb.d/restore.sh
 
 # Устанавливаем права на скрипты
-RUN chmod +x /var/lib/postgresql/backup.sh \
-    && chmod +x /docker-entrypoint-initdb.d/restore.sh \
+RUN chmod 777 /var/lib/postgresql/backup.sh \
+    && chmod 777 /docker-entrypoint-initdb.d/restore.sh \
     && mkdir -p /var/lib/postgresql/backups \
     && chown -R postgres:postgres /var/lib/postgresql/backups \
     && chown postgres:postgres /var/lib/postgresql/backup.sh
