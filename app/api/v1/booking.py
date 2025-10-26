@@ -41,7 +41,10 @@ async def possible_create_booking(
         raise HTTPException(status_code=400,
                             detail=f"Неверные входные данные: {e}")
 
-    cookie_createkey = request.cookies.get("createkey")
+    if getattr(user, "user_type", None) == "telegram":
+        cookie_createkey = request.headers.get("X-CreateKey")
+    else:
+        cookie_createkey = request.cookies.get("createkey")
     logger.debug(f"Cookie createkey: {cookie_createkey}")
     
     # try:
@@ -80,7 +83,10 @@ async def create_booking_row(
         raise HTTPException(status_code=400,
                             detail=f"Неверные входные данные: {e}")
 
-    cookie_createkey = request.cookies.get("createkey")
+    if getattr(user, "user_type", None) == "telegram":
+        cookie_createkey = request.headers.get("X-CreateKey")
+    else:
+        cookie_createkey = request.cookies.get("createkey")
     logger.debug(f"Cookie createkey: {cookie_createkey}")
     
     # try:

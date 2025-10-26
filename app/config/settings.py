@@ -15,6 +15,7 @@ include(
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SECRET_KEY = os.getenv('SECRET_KEY')
+TELEGRAM_SHARED_SECRET = os.getenv('TELEGRAM_SHARED_SECRET')
 
 DEBUG = os.environ.get('DEBUG', False) == 'True'
 

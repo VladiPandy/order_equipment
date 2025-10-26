@@ -13,6 +13,8 @@ from django.contrib.auth.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 import base64
 
+from dependings.models import Project, Adminstrator
+
 logger = logging.getLogger(__name__)
 
 @sync_to_async
@@ -45,6 +47,7 @@ def get_django_user_from_request(request: Request, db_async_session):
         User = get_user_model()
         try:
             user = User.objects.get(pk=user_id)
+            user.user_type = 'web'
             return user
         except User.DoesNotExist:
             return None
@@ -63,8 +66,49 @@ def get_django_user_from_request(request: Request, db_async_session):
             logger.error(f"Error decoding credentials: {str(e)}")
             return None
         user = authenticate(username=username, password=password)
+        user.user_type = 'web'
         logger.info(f"Authenticated user: {user}")
         return user
+
+    telegram_secret = request.headers.get("X-Telegram-Secret")
+    telegram_nick = request.headers.get("X-Telegram-Nick")
+
+    if telegram_secret and telegram_nick:
+        expected_secret = getattr(settings, "TELEGRAM_SHARED_SECRET", None)
+        if not expected_secret or telegram_secret != expected_secret:
+            logger.warning("Invalid TELEGRAM_SHARED_SECRET in request")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid Telegram secret"
+            )
+
+        # Нормализуем ник
+        clean_nick = telegram_nick.strip().lstrip('@')
+
+        try:
+            project = Project.objects.filter(telegram_nick=clean_nick).first()
+            adminstrator = Adminstrator.objects.filter(telegram_nick=clean_nick).first()
+            if project:
+                logger.info(f"Telegram auth success for project {project.project_nick}")
+                user = authenticate(username=project.project_nick, password=project.project_password)
+                user.user_type = 'telegram'
+                return user
+            elif adminstrator:
+                logger.info(f"Telegram auth success for adminstrator {adminstrator.admin_nick}")
+                user = authenticate(username=adminstrator.admin_nick, password=adminstrator.admin_password)
+                user.user_type = 'telegram'
+                return user
+            else:
+                logger.warning(f"Telegram nick not found: {clean_nick}")
+        except Exception as e:
+            logger.error(f"Telegram auth DB lookup failed: {e}")
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Ник телеграмма не авторизован"
+        )
+
+    return None
 
 
 def check_auth(func):

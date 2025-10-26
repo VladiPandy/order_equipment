@@ -201,6 +201,13 @@ class Adminstrator(UUIDMixin, TimeStampedMixin):
         verbose_name='Пароль для входа'
     )
 
+    telegram_nick = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Ник в телеграмме'
+    )
+
     class Meta:
         db_table = 'public"."adminstrator'
         verbose_name = 'Администратор'
@@ -229,6 +236,18 @@ class Adminstrator(UUIDMixin, TimeStampedMixin):
                                                                  self.admin_password):
             raise ValidationError(
                 "Пароль должен содержать хотя бы одну букву и одну цифру.")
+
+        if self.telegram_nick:
+            nick = self.telegram_nick.strip()
+
+            if nick.startswith('@'):
+                nick = nick[1:]
+
+            if not re.match(r'^[A-Za-z0-9_]{5,}$', nick):
+                raise ValidationError(
+                    "Некорректный ник телеграм-канала. Допустимы только буквы, цифры и символ '_', минимум 5 символов."
+                )
+            self.telegram_nick = nick
 
         super().clean()
 
@@ -338,6 +357,13 @@ class Project(UUIDMixin, TimeStampedMixin):
         verbose_name='Пароль для входа'
     )
 
+    telegram_nick = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Ник в телеграмме'
+    )
+
     class Meta:
         db_table = 'public"."project'
         verbose_name = 'Проект'
@@ -365,6 +391,18 @@ class Project(UUIDMixin, TimeStampedMixin):
                                                                  self.project_password):
             raise ValidationError(
                 "Пароль должен содержать хотя бы одну букву и одну цифру.")
+
+        if self.telegram_nick:
+            nick = self.telegram_nick.strip()
+
+            if nick.startswith('@'):
+                nick = nick[1:]
+
+            if not re.match(r'^[A-Za-z0-9_]{5,}$', nick):
+                raise ValidationError(
+                    "Некорректный ник телеграм-канала. Допустимы только буквы, цифры и символ '_', минимум 5 символов."
+                )
+            self.telegram_nick = nick
 
         super().clean()
 

@@ -513,6 +513,7 @@ class UserBookingService:
                             right join dependings_projectperanalyze x on x.project_n_id = y.id 
                             left join dependings_analyzeperequipment z on z.analazy_id = x.analazy_n_id 
                             left join dependings_operatorperequipment v on v.equipment_id = z.equipment_name_id 
+                            left join dependings_executorperanalyze exec_analyz on exec_analyz.operator_nt_id = v.operator_id and exec_analyz.analazy_nt_id = z.analazy_id 
                             left join "analyze" a on a.id  = z.analazy_id 
                             left join equipment eq on eq.id  = v.equipment_id 
                             left join executor ex on ex.id = v.operator_id 
@@ -551,6 +552,7 @@ class UserBookingService:
                         and {uuids_json['operator_val']}
                         and LEAST(coalesce(lpe.can_use, eq.count_samples),
                                 		z.count_samples - coalesce(ul_per_day.used_limit,0)) > 0
+                        and exec_analyz.operator_nt_id is not null
                         order by date::DATE, v.is_priority desc
                        """)
         availible_values = await db.execute(new_values_query)
@@ -669,7 +671,13 @@ class UserBookingService:
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                           uuids_json['user_id'])
 
-            response.set_cookie(key="createkey", value=cookie_createkey)
+            if getattr(user, "user_type", None) == "telegram":
+                # Для Telegram-бота: не устанавливаем cookie, а просто добавляем ключ в ответ
+                logger.debug("Telegram user detected — возврат ключа без cookie")
+                response.headers["X-CreateKey"] = str(cookie_createkey)
+            else:
+                # Для браузера: стандартное поведение
+                response.set_cookie(key="createkey", value=cookie_createkey)
 
         elif cookie_createkey and set(request_dict.keys()) == {'end', 'start'}:
             # Блокируем старый токен
@@ -681,7 +689,13 @@ class UserBookingService:
             cookie_createkey = await UserBookingService.create_new_cookie_key(db,
                                                                             uuids_json['user_id'])
 
-            response.set_cookie(key="createkey", value=cookie_createkey)
+            if getattr(user, "user_type", None) == "telegram":
+                # Для Telegram-бота: не устанавливаем cookie, а просто добавляем ключ в ответ
+                logger.debug("Telegram user detected — возврат ключа без cookie")
+                response.headers["X-CreateKey"] = str(cookie_createkey)
+            else:
+                # Для браузера: стандартное поведение
+                response.set_cookie(key="createkey", value=cookie_createkey)
 
         # Если токен передан, проверяем его срок действия
         elif cookie_createkey:
@@ -987,9 +1001,6 @@ class UserBookingService:
             raise HTTPException(status_code=404,
                                 detail="Нет доступных вариантов")
 
-        print(list_availible_values)
-        print(list_block_values)
-        print(limit_sample_value)
         projects_json = {}
         date_json = {}
         analyze_json = {}

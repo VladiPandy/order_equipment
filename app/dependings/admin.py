@@ -14,3 +14,7 @@ class OperatorPerEquipmentAdmin(admin.ModelAdmin):
 @admin.register(AnalyzePerEquipment,site=custom_admin_site)
 class AnalyzePerEquipmentAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(ExecutorPerAnalyze,site=custom_admin_site)
+class ExecutorPerAnalyzeAdmin(admin.ModelAdmin):
+    pass

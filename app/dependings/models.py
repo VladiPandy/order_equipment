@@ -113,3 +113,36 @@ class ProjectPerAnalyze(models.Model):
 
     def __str__(self):
         return f"{self.analazy_n} - {self.project_n}"
+
+class ExecutorPerAnalyze(models.Model):
+    """
+    Модель для представления связи между Исполнителем и анализом
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    operator_nt = models.ForeignKey(Executor, on_delete=models.CASCADE, verbose_name='Исполнитель', related_name='executor_3')
+    analazy_nt = models.ForeignKey(Analyze, on_delete=models.CASCADE, verbose_name='Анализ', related_name='analyze_3')
+
+    def clean(self) -> None:
+        """
+        Проверка перед сохранением записи.
+        Если уже существует запись с таким же исполнителем и анализом, выбрасывается ошибка.
+
+        :raises ValidationError: Если уже существует другая запись с такой же связью.
+        """
+        if ExecutorPerAnalyze.objects.exclude(pk=self.pk).filter(
+                operator_nt=self.operator_nt, analazy_nt=self.analazy_nt).exists():
+            raise ValidationError(
+                f"Запись с исполнитель {self.operator_nt} и анализом {self.analazy_nt} уже существует."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызов clean() перед сохранением
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Исполнитель/Анализ'
+        verbose_name_plural = 'Исполнители/Анализы'
+        ordering = ['operator_nt', 'analazy_nt']
+
+    def __str__(self):
+        return f"{self.operator_nt} - {self.analazy_nt}"
