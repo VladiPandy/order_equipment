@@ -202,7 +202,7 @@ class OpenWindowForOrdering(UUIDMixin, TimeStampedMixin):
     class Meta:
         verbose_name = 'Окно для заказа'
         verbose_name_plural = 'Окна для заказа'
-        ordering = ['start_date','end_time']
+        ordering = ['-start_date','-end_time']
 
     def __str__(self):
         return (
