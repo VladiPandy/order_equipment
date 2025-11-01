@@ -247,6 +247,26 @@ class Adminstrator(UUIDMixin, TimeStampedMixin):
                 raise ValidationError(
                     "Некорректный ник телеграм-канала. Допустимы только буквы, цифры и символ '_', минимум 5 символов."
                 )
+
+            conflict_admin = (
+                Adminstrator.objects
+                .filter(telegram_nick__iexact=nick)
+                .exclude(pk=self.pk)
+                .exists()
+            )
+
+            from dependings.models import Project  # импорт внутри, чтобы избежать циклов
+            conflict_project = (
+                Project.objects
+                .filter(telegram_nick__iexact=nick)
+                .exists()
+            )
+
+            if conflict_admin or conflict_project:
+                raise ValidationError(
+                    {"telegram_nick": "Такой Telegram-ник уже используется другим проектом или администратором."}
+                )
+
             self.telegram_nick = nick
 
         super().clean()
@@ -402,6 +422,26 @@ class Project(UUIDMixin, TimeStampedMixin):
                 raise ValidationError(
                     "Некорректный ник телеграм-канала. Допустимы только буквы, цифры и символ '_', минимум 5 символов."
                 )
+
+            conflict_project = (
+                Project.objects
+                .filter(telegram_nick__iexact=nick)
+                .exclude(pk=self.pk)  # исключаем саму себя
+                .exists()
+            )
+
+            from dependings.models import Adminstrator  # импорт внутри, чтобы избежать циклов
+            conflict_admin = (
+                Adminstrator.objects
+                .filter(telegram_nick__iexact=nick)
+                .exists()
+            )
+
+            if conflict_admin or conflict_project:
+                raise ValidationError(
+                    {"telegram_nick": "Такой Telegram-ник уже используется другим проектом или администратором."}
+                )
+
             self.telegram_nick = nick
 
         super().clean()
