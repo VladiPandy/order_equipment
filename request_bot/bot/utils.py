@@ -54,6 +54,11 @@ async def get_project_info(telegram_nick: str):
                 if "application/json" in ctype:
                     data = await resp.json()
                     logger.debug(f"RESPONSE JSON: {data}")
+                    if isinstance(data, dict) and data.get("detail") == "Ник телеграмма не авторизован":
+                        logger.warning(
+                            f"Telegram nick '{telegram_nick}' is not authorized. Returning None."
+                        )
+                        return None
                     logger.info(
                         f"Successfully retrieved project info for user: {telegram_nick}"
                     )

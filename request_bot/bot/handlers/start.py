@@ -13,7 +13,10 @@ async def show_main_menu(username):
     """Формирует сообщение и клавиатуру главного меню"""
     info = await get_project_info(username)
     if not info:
-        return None, None
+        msg = (
+            "Похоже, вы ещё не зарегистрированы в системе."
+        )
+        return msg, None
     fio = info.get("responsible_fio", "")
     proj = info.get("project_name", "Ваш проект")
     is_open = info.get("is_open", 0)
