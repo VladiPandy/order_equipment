@@ -4,8 +4,11 @@
     border-radius: 100px;
     color: white;
 
-    &.done, &.checked {
+    &.checked {
         background-color: var(--color-light-blue);
+    }
+    &.done {
+        background-color: #C7B8FF;
     }
     &.pending {
         background-color: var(--color-yellow);

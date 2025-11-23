@@ -59,6 +59,19 @@ services:
     depends_on:
       - api_app
 
+
+  bot:
+    build:
+      context: ./request_bot
+      dockerfile: Dockerfile
+    container_name: telegram_bot
+    restart: unless-stopped
+    volumes:
+      - ./logs:/request_bot/logs
+      - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
+
   nginx:
     build:
       context: ./nginx

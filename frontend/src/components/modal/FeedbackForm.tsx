@@ -68,7 +68,7 @@ const FeedbackForm: FC<FeedbackFormProps> = ({ selectedBookingId, onClose }) => 
                             <Toggle
                                 checked={feedback.question_3}
                                 onChange={() => handleToggle('question_3')}
-                                label="Нет замечаний по качеству работы"
+                                label="Довольны качеством работы"
                             />
                         </div>
                         <div className="buttonCollection">
