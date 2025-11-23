@@ -8,7 +8,7 @@
         background-color: var(--color-light-blue);
     }
     &.done {
-        background-color: #C7B8FF;
+        background-color: var(--color-done);
     }
     &.pending {
         background-color: var(--color-yellow);

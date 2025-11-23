@@ -66,9 +66,10 @@ services:
       dockerfile: Dockerfile
     container_name: telegram_bot
     restart: unless-stopped
+    env_file:
+      - ./.env
     volumes:
       - ./logs:/request_bot/logs
-      - ./.env
     environment:
       - PYTHONUNBUFFERED=1
 
