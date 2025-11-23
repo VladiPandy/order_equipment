@@ -40,6 +40,9 @@ async def handle_main_menu(username, send_func):
     if msg and kb:
         await send_func(msg, reply_markup=kb)
         logger.info(f"Main menu shown for user: {username}")
+    if msg:
+        await send_func(msg)
+        logger.info(f"Main not menu shown for user: {username}")
     else:
         await send_func("Ошибка доступа.")
         logger.error(f"Failed to show main menu for user: {username}")
