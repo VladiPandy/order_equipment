@@ -80,7 +80,7 @@ async def create_booking_message(
                 "booking_id": booking_id,
                 "author": items[0][1] if items else 'Admin',
                 "author_username": user.username,
-                "is_admin": bool(items[0][2]) if items else True,
+                "is_admin": bool(items[0][3]) if items else True,
                 "message": body.message,
             },
         )

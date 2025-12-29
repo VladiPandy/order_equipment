@@ -294,9 +294,9 @@ INFO_EQUIPMENT_USER_QUERY = """
 
 # Запрос для получения информации о проекте
 PROJECT_INFO_QUERY = """
-    SELECT responsible_person,project_name, is_priority  FROM \"project\" WHERE project_nick = '{username}' 
+    SELECT responsible_person,project_name, is_priority , False as is_admin  FROM \"project\" WHERE project_nick = '{username}' 
     UNION ALL
-    SELECT admin_person responsible_person ,admin_nick project_name, False is_priority FROM \"adminstrator\" WHERE admin_nick = '{username}' LIMIT 1;
+    SELECT admin_person responsible_person ,admin_nick project_name, True as is_priority, True as is_admin FROM \"adminstrator\" WHERE admin_nick = '{username}' LIMIT 1;
 """
 
 # Запрос для проверки открытого глобального окна

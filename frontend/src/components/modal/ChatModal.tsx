@@ -44,6 +44,21 @@ const ChatModal: FC<ChatModalProps> = ({ bookingId, onClose }) => {
         return el.scrollHeight - el.scrollTop - el.clientHeight < 50
     }
 
+    const formatDateTime = (iso: string): string => {
+        const d = new Date(iso)
+
+        // Дата: ДД.ММ.ГГГГ
+        const date = d.toLocaleDateString('ru-RU')
+
+        // Время: ЧЧ:ММ
+        const time = d.toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+
+        return `${date} ${time}`
+    }
+
     /** Скроллим чат вниз */
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -138,7 +153,7 @@ const ChatModal: FC<ChatModalProps> = ({ bookingId, onClose }) => {
                                     <div className="text">{msg.message}</div>
 
                                     <span className="time">
-                                        {new Date(msg.created_at).toLocaleTimeString()}
+                                        {formatDateTime(msg.created_at)}
                                     </span>
                                 </div>
                             </div>
