@@ -223,13 +223,13 @@ const EditModal: FC<EditModalProps> = ({ onClose, onSubmit, editingEntry }) => {
                     type={'number'}
                     max={options?.samples_limit} 
                 />
-                <Input 
-                    placeholder={'Комментарий'} 
-                    title={'Комментарий'} 
-                    value={comment} 
-                    setValue={(value) => setComment(String(value))} 
-                    type={'textArea'}
-                />
+                {/*<Input */}
+                {/*    placeholder={'Комментарий'} */}
+                {/*    title={'Комментарий'} */}
+                {/*    value={comment} */}
+                {/*    setValue={(value) => setComment(String(value))} */}
+                {/*    type={'textArea'}*/}
+                {/*/>*/}
 
                 <div className='buttonCollection'>
                     <Button onClick={resetForm} type={'secondary'} children={'Отмена'}/>

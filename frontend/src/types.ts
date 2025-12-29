@@ -56,6 +56,9 @@ export type BookingType = {
     samples: string,
     status: string,
     comment: string
+
+    messages_count?: number
+    last_message_is_me?: boolean | null
 }
 
 export type FilterBodyType = {

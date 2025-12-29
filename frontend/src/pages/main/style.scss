@@ -8,12 +8,25 @@
         margin-bottom: 18px;
     }
     .table-cell {
-        width: 15%;
+        flex: 1;                 // вместо процентов
         text-align: center;
-        &:nth-child(2n + 1) {
-            width: 10%;
-        } 
+        padding: 0 2px;          // компактнее
+        min-width: 0;            // важно для сжатия текста
     }
+
+    .id-cell {
+        width: 44px;
+        min-width: 44px;
+        max-width: 44px;
+
+        text-align: right;
+        font-weight: 600;
+        font-size: 0.9em;
+        color: #6b7280;
+
+        flex: 0 0 36px;
+    }
+
     .table-line {
         display: flex;
         align-items: center;
@@ -27,5 +40,50 @@
 
     .Filter-line {
         margin-bottom: 2.6vw;
+    }
+
+    .chat-btn {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 6px;
+        min-width: auto;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            display: block;
+        }
+    }
+    .chat-btn .chat-icon,
+    .chat-btn .chat-icon path {
+        stroke: currentColor !important;
+    }
+
+    .chat-icon--empty {
+        color: #9CA3AF; // серый
+    }
+
+    .chat-icon--unread {
+        color: #f5c542; // жёлтый
+    }
+
+    .chat-icon--mine {
+        color: #2f80ed; // синий
+    }
+}
+
+.MainPageTable {
+
+    .actions-cell {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+
+        width: 15%;
+        text-align: right;
     }
 }

@@ -136,7 +136,8 @@ class UserInfoService:
                 text(
                     BOOKING_INFO_STAFF.format(
                         start_date = date_booking_dict['date_start'],
-                        end_date = date_booking_dict['date_end']
+                        end_date = date_booking_dict['date_end'],
+                        username=user.username,
                     )
                 )
             )
@@ -211,7 +212,9 @@ class UserInfoService:
                 executor=row[5],
                 samples=row[6],
                 status=row[7],
-                comment=row[8] if row[8] is not None else ""
+                comment=row[8] if row[8] is not None else "",
+                messages_count=row[9],
+                last_message_is_me= row[10],
             )
             bookings.append(booking_item)
 
@@ -233,7 +236,8 @@ class UserInfoService:
                 text(
                     BOOKING_INFO_STAFF.format(
                         start_date=date_booking_dict['date_start'],
-                        end_date=date_booking_dict['date_end']
+                        end_date=date_booking_dict['date_end'],
+                        username=user.username
                     )
                 )
             )
@@ -251,7 +255,7 @@ class UserInfoService:
         rows = result.fetchall()
 
         df = pd.DataFrame(rows, columns=[
-            "id", "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий"
+            "id", "Проект", "Дата", "Анализ", "Оборудование", "Исполнитель", "Кол-во проб", "Статус", "Комментарий", "Сообщений", "Последнее мое сообщение"
         ])
         if not df.empty:
             df["Дата"] = df["Дата"].apply(lambda x: x.strftime("%d.%m.%Y") if hasattr(x, "strftime") else x)

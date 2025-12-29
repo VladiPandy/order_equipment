@@ -320,12 +320,33 @@ OPEN_LOCAL_REGISTRATION_QUERY = """
 
 BOOKING_INFO_STAFF = """
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-     , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment
+     , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic),x.count_analyses, x.status, x.comment,
+     COALESCE(m.messages_count, 0) AS messages_count,
+     CASE
+        WHEN m.messages_count = 0 THEN NULL
+        ELSE (m.last_author_username = '{username}')
+    END AS last_message_is_me
     FROM projects_booking x
     JOIN "project" y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
     JOIN equipment e ON e.id = x.equipment_id
     JOIN executor ex ON ex.id = x.executor_id
+    LEFT JOIN (
+        SELECT
+            booking_id,
+            COUNT(*) AS messages_count,
+            (
+                SELECT author_username
+                FROM public.projects_booking_messages m2
+                WHERE m2.booking_id = m.booking_id
+                  AND m2.is_deleted = FALSE
+                ORDER BY m2.created_at DESC
+                LIMIT 1
+            ) AS last_author_username
+        FROM public.projects_booking_messages m
+        WHERE m.is_deleted = FALSE
+        GROUP BY booking_id
+    ) m ON m.booking_id = x.id
     WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
     and x.is_delete = False
     order by  x.date_booking desc,y.project_name, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
@@ -336,12 +357,35 @@ BOOKING_INFO_USER = """
         SELECT id, project_name FROM "project" WHERE project_nick = '{username}'
     )
     SELECT x.id, y.project_name, x.date_booking, z.analyze_name, e.name
-        , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment
+        , concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic), x.count_analyses, x.status, x.comment,
+        -- количество сообщений
+        COALESCE(m.messages_count, 0) AS messages_count,
+        -- последнее сообщение мое / не мое
+        CASE
+            WHEN m.messages_count = 0 THEN NULL
+            ELSE (m.last_author_username = '{username}')
+        END AS last_message_is_me
     FROM projects_booking x
     JOIN uuid_project y ON y.id = x.project_id
     JOIN "analyze" z ON z.id = x.analyse_id
     JOIN equipment e ON e.id = x.equipment_id
     JOIN executor ex ON ex.id = x.executor_id
+    LEFT JOIN (
+        SELECT
+            booking_id,
+            COUNT(*) AS messages_count,
+            (
+                SELECT author_username
+                FROM public.projects_booking_messages m2
+                WHERE m2.booking_id = m.booking_id
+                  AND m2.is_deleted = FALSE
+                ORDER BY m2.created_at DESC
+                LIMIT 1
+            ) AS last_author_username
+        FROM public.projects_booking_messages m
+        WHERE m.is_deleted = FALSE
+        GROUP BY booking_id
+    ) m ON m.booking_id = x.id
 
     WHERE x.date_booking BETWEEN '{start_date}' AND '{end_date}'
     and x.is_delete = False

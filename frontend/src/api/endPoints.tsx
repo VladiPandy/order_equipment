@@ -17,5 +17,8 @@ export const endPoints: Record<string, string> = {
     downloadBookings: 'info/download_bookings',
     downloadExecutors: 'info/download_executor',
     downloadEquipment: 'info/download_equipment',
+
+    bookingMessages: 'chat/booking/messages',
+    bookingMessageCreate: 'chat/booking/messages',
 }
 

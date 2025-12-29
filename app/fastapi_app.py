@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from api.v1 import info, booking, auth
+from api.v1 import info, booking, auth, chat
 
 
 async_engine = None
@@ -78,6 +78,7 @@ logger.info("Регистрация маршрутов FastAPI")
 app.include_router(info.router, prefix='/api/v1/info', tags=['Информация'])
 app.include_router(booking.router, prefix='/api/v1/booking', tags=['Бронирование'])
 app.include_router(auth.router, prefix='/api/v1/auth', tags=['Авторизация'])
+app.include_router(chat.router, prefix='/api/v1/chat', tags=['Чат'])
 
 if __name__ == '__main__':
     logger.info("Запуск сервера Uvicorn")

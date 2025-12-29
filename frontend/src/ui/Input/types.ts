@@ -1,4 +1,5 @@
-import { KeyType, DateRange, SimpleValueChangeType } from '../../types'
+import {KeyType, DateRange, SimpleValueChangeType} from '../../types'
+import React from "react";
 
 export type InputType = 'text' | 'number' | 'textArea' | 'dropDown' | 'calendar'
 
@@ -26,15 +27,16 @@ export interface NumberInputProps extends BaseInputProps {
 }
 
 export interface DropDownInputProps extends BaseInputProps {
-    type: 'dropDown'
-    value?: string[]
-    setValue: (value: string | string[], filter: KeyType) => void
-    options: string[] | {[key in string]: string}
-    children?: JSX.Element
-    filter: KeyType
-    isMultiple?: boolean
-    enabled?: boolean
-    isPrioritySupport?: boolean
+    type: 'dropDown',
+    value?: string[],
+    setValue: (value: string | string[], filter: KeyType) => void,
+    options: string[] | { [key in string]: string },
+    children?: JSX.Element,
+    filter: KeyType,
+    isMultiple?: boolean,
+    enabled?: boolean,
+    isPrioritySupport?: boolean,
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void,
 }
 
 export interface CalendarInputProps extends BaseInputProps {
@@ -45,8 +47,8 @@ export interface CalendarInputProps extends BaseInputProps {
     onlyWeek?: boolean
 }
 
-export type InputProps = 
-    | TextInputProps 
-    | NumberInputProps 
-    | DropDownInputProps 
+export type InputProps =
+    | TextInputProps
+    | NumberInputProps
+    | DropDownInputProps
     | CalendarInputProps & { isPrioritySupport?: boolean }

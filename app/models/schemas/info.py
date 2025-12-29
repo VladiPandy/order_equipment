@@ -29,6 +29,8 @@ class BaseInfoItem(BaseModel):
     samples: int
     status: str
     comment: Optional[str] = ""
+    messages_count: Optional[int] = 0
+    last_message_is_me: Optional[bool] = False
 
 class BaseTableRow(BaseModel):
     monday: Optional[str] = ""
