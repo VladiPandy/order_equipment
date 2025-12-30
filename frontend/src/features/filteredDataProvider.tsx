@@ -44,7 +44,8 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
         getInstruments,
         getExecutors
     } = useContext(InfoContext)
-    const { filters } = useContext(FiltersContext)
+    const { filters, getFilterBody } = useContext(FiltersContext)
+
 
     const prevDate = useRef(filters.date)
 
@@ -52,20 +53,20 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     const executorsDateRef = useRef(filters.date)
     const bookingsDateRef = useRef(filters.date)
 
-    const filterOnDate = (value: string, getter: (date: DateRange) => void) => {
-        const bookingDate = parse(value as string, 'dd.MM.yyyy', new Date())
+    const filterOnDate = (value: string) => {
+        const bookingDate = parse(value, 'dd.MM.yyyy', new Date())
         const startDate = parse(filters.date.start, 'dd.MM.yyyy', new Date())
         const endDate = parse(filters.date.end, 'dd.MM.yyyy', new Date())
-        
+
         const prevStartDate = parse(prevDate.current.start, 'dd.MM.yyyy', new Date())
         const prevEndDate = parse(prevDate.current.end, 'dd.MM.yyyy', new Date())
-        
+
         if (startDate < prevStartDate || endDate > prevEndDate) {
-            getter(filters.date)
+            getBookings(getFilterBody())
             prevDate.current = filters.date
             return false
         }
-        
+
         return isWithinInterval(bookingDate, { start: startDate, end: endDate })
     }
 
@@ -82,7 +83,7 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     const filterBookings = (filters: Filters) => {
         if (filters.date.start !== bookingsDateRef.current.start || filters.date.end !== bookingsDateRef.current.end) {
             bookingsDateRef.current = filters.date
-            getBookings(filters.date)
+            getBookings(getFilterBody())
         } else {
             const filtered = bookings.filter((booking) => {
                 return Object.entries(booking).reduce((acc, [key, value]) => {
@@ -91,7 +92,7 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
                     if (key in filters) {
                         const filterValue = filters[key as keyof Filters]
                         if (key === 'date') {
-                            return filterOnDate(value as string, getBookings)
+                            return filterOnDate(value as string)
                         }
                         if (Array.isArray(filterValue)) {
                             if (!filterValue.length) return true

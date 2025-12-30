@@ -71,7 +71,7 @@ class UserBookingService:
                     # Если end не указан, берем диапазон 2 недели назад и 2 недели вперед от сегодня.
                     today = datetime.today().date()
                     date_start = today - timedelta(weeks=2)
-                    date_end = today + timedelta(weeks=2)
+                    date_end = today + timedelta(weeks=6)
             # Если параметров start/end нет, но есть week и year - используем их.
             elif 'certian_date' in request and request['certian_date']:
                 try:
@@ -98,7 +98,7 @@ class UserBookingService:
                 # Если ни start/end, ни week/year не переданы, устанавливаем диапазон по умолчанию.
                 today = datetime.today().date()
                 date_start = today - timedelta(weeks=2)
-                date_end = today + timedelta(weeks=2)
+                date_end = today + timedelta(weeks=6)
 
             logger.debug(
                 f"Рассматриваем период {date_start}-{date_end}")

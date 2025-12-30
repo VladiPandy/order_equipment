@@ -37,15 +37,20 @@ export const BookingsProvider: FC<PropsType> = ({children}) => {
     const [loading, setLoading] = useState<boolean>(false)
 
     const getBookings = useCallback((body: FilterBodyType) => {
-        setLoading(true)
         if (loading) return
-        globalPost(endPoints.booking, (response: BookingType[]) => {
-            localStorage.setItem('lastUpdate', Date.now().toString())
-            setData(response)
-            setLoading(false)
-            return response
-        }, body)
-    }, [])
+
+        setLoading(true)
+
+        globalPost(
+            endPoints.booking,
+            (response: BookingType[]) => {
+                localStorage.setItem('lastUpdate', Date.now().toString())
+                setData(response)
+                setLoading(false)
+            },
+            body
+        )
+    }, [loading])
 
     const createBooking = useCallback((newEntry: BookingType, callback: (response: BookingType) => void) => {
         const body = {
