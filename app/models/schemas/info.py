@@ -68,12 +68,12 @@ class InfoEquipmentTable(BaseTableRow):
 
 class RatingRowResponse(BaseModel):
     executor: str
-    avg_total: float | None
-    avg_on_time: float | None
-    avg_full_set: float | None
-    avg_quality: float | None
-    total_answer_analyses: int | None
-    total_analyses: int
+    avg_total: Optional[float] = None
+    avg_on_time: Optional[float] = None
+    avg_full_set: Optional[float] = None
+    avg_quality: Optional[float] = None
+    total_answer_analyses: int = 0
+    total_analyses: int = 0
 
 
 class RatingsResponse(BaseModel):
