@@ -1,5 +1,5 @@
-import { createContext, FC, useContext, useEffect, useRef, useState } from "react"
-import { BookingType, DateRange, Filters, EquipmentInfo, ExecutorInfo } from "../types"
+import { createContext, FC, useContext,useCallback, useEffect, useRef, useState } from "react"
+import { BookingType, DateRange,RatingRow, Filters, EquipmentInfo, ExecutorInfo } from "../types"
 import { parse, isWithinInterval } from 'date-fns'
 import { BookingsContext } from "./bookingsProvider"
 import { FiltersContext } from "./filtersProvider"
@@ -9,18 +9,26 @@ type ContextType = {
     filteredBooking: BookingType[],
     filteredInstruments: EquipmentInfo[],
     filteredExecutors: ExecutorInfo[],
+    // filteredRatings: RatingRow[],
+    filteredRatings: RatingRow[],
+
     filterBookings: (filters: Filters) => void,
     filterExecutors: (filters: Filters) => void,
     filterInstruments: (filters: Filters) => void,
+    loadRatings: () => Promise<void>,
 }
 
 const initialValue = {
     filteredBooking: [],
     filteredInstruments: [],
     filteredExecutors: [],
+    filteredRatings: [],
+
     filterBookings: () => {},
     filterExecutors: () => {},
     filterInstruments: () => {},
+
+    loadRatings: async () => {},
 }
 
 export const FilteredDataContext = createContext<ContextType>(initialValue)
@@ -33,6 +41,7 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     const [filteredBooking, setFilteredBooking] = useState<BookingType[]>([])
     const [filteredInstruments, setFilteredInstruments] = useState<EquipmentInfo[]>([])
     const [filteredExecutors, setFilteredExecutors] = useState<ExecutorInfo[]>([])
+    const [filteredRatings, setFilteredRatings] = useState<RatingRow[]>([])
 
     const {
         bookings,
@@ -41,8 +50,10 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     const {
         instruments,
         executors,
+        ratings,
         getInstruments,
-        getExecutors
+        getExecutors,
+        getRatings,
     } = useContext(InfoContext)
     const { filters, getFilterBody } = useContext(FiltersContext)
 
@@ -79,6 +90,20 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
     useEffect(() => {
         filterExecutors(filters)
     }, [executors, filters])
+
+    useEffect(() => {
+        setFilteredRatings(
+            (ratings ?? []).map((r) => ({
+                executor: r.executor,
+                avgTotal: r.avg_total,
+                avgOnTime: r.avg_on_time,
+                avgFullSet: r.avg_full_set,
+                avgQuality: r.avg_quality,
+                totalAnswerAnalyses: r.total_answer_analyses,
+                totalAnalyses: r.total_analyses,
+            }))
+        )
+    }, [ratings])
 
     const filterBookings = (filters: Filters) => {
         if (filters.date.start !== bookingsDateRef.current.start || filters.date.end !== bookingsDateRef.current.end) {
@@ -125,13 +150,20 @@ export const FilteredDataProvider: FC<PropsType> = ({children}) => {
         }
     }
 
+    const loadRatings = useCallback(async (): Promise<void> => {
+        const date = getFilterBody()
+        await getRatings(date)
+    }, [getFilterBody, getRatings])
+
     const contextData = {
         filteredBooking,
         filteredInstruments,
         filteredExecutors,
+        filteredRatings,
         filterBookings,
         filterExecutors,
         filterInstruments,
+        loadRatings,
     }
     
     return <FilteredDataContext.Provider value={contextData}>{children}</FilteredDataContext.Provider>

@@ -13,12 +13,15 @@ export const endPoints: Record<string, string> = {
 
     infoEquipment: 'info/table_equipment',
     infoExecutor: 'info/table_executor',
+    infoRatings: 'info/rating_executor',
 
     downloadBookings: 'info/download_bookings',
     downloadExecutors: 'info/download_executor',
     downloadEquipment: 'info/download_equipment',
+    downloadRatings: 'info/download_ratings',
 
     bookingMessages: 'chat/booking/messages',
     bookingMessageCreate: 'chat/booking/messages',
+
 }
 

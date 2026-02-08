@@ -111,3 +111,13 @@ export interface EquipmentInfo extends BaseInfo {
 export interface ExecutorInfo extends BaseInfo {
     executor: string
 }
+
+export type RatingRow = {
+    executor: string
+    avgTotal: number
+    avgOnTime: number
+    avgFullSet: number
+    avgQuality: number
+    totalAnswerAnalyses: number
+    totalAnalyses: number
+}

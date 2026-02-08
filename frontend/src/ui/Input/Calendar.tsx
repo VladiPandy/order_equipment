@@ -26,6 +26,10 @@ const DatePicker: FC<CalendarPropsType> = ({ value, onChange, onlyWeek = false }
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        setRenderValue(value)
+    }, [value.start, value.end])
+
+    useEffect(() => {
         if (onlyWeek) {
             onChange(getNextWeekDateRange(), Keys.DATE)
         } else {

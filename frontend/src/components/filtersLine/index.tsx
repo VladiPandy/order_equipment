@@ -14,9 +14,10 @@ import { DateRange } from '../../types'
 
 interface Props {
     onTables?: boolean
+    onlyWeek?: boolean
 }
 
-const FiltersLine: FC<Props> = ({onTables = false}) => {
+const FiltersLine: FC<Props> = ({onTables = false,onlyWeek}) => {
     const { filters, filtersOptions, changeFilters, resetFilters, loading } = useContext(FiltersContext)
 
     const handleReset = () => {
@@ -35,14 +36,17 @@ const FiltersLine: FC<Props> = ({onTables = false}) => {
         }
 
         if (type === 'calendar') {
+
+            const isWeekMode = (onlyWeek ?? onTables)
+
             return (
                 <Input
                     {...commonProps}
-                    key={key}
+                    key={`calendar-${isWeekMode ? 'week' : 'range'}`}
                     type="calendar"
                     value={filters[filter] as DateRange}
                     setValue={changeFilters}
-                    onlyWeek={onTables}
+                    onlyWeek={onlyWeek ?? onTables}
                 />
             )
         }

@@ -13,7 +13,11 @@ from datetime import datetime
 from sql.info_queries import PROJECT_INFO_QUERY, OPEN_GLOBAL_WINDOW_QUERY, OPEN_LOCAL_REGISTRATION_QUERY
 
 from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
-    InfoListsResponse, InfoBookingItem, InfoExecutorTable, InfoEquipmentTable
+    InfoListsResponse, InfoBookingItem, InfoExecutorTable, InfoEquipmentTable, \
+    RatingRowResponse
+
+from sql.info_queries import BOOKING_INFO_STAFF, RATINGS_QUERY
+
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -196,6 +200,73 @@ async def get_project_bookings(
 
     return await UserInfoService.info_equipment(req_model, user, db)
 
+@router.post(
+    "/rating_executor",
+    response_model=list[RatingRowResponse],
+    tags=["Информация"],
+    summary="Рейтинг сотрудников",
+    description="Агрегированный рейтинг сотрудников за период",
+    status_code=status.HTTP_200_OK,
+)
+@admin_only
+async def get_ratings(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: object = None
+):
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+        data_check = data if data else {}
+        req_model = InfoListsRequest(**data_check)
+    except Exception as e:
+        raise HTTPException(status_code=400,
+                            detail=f"Неверные входные данные: {e}")
+
+    date_start = datetime.strptime(req_model.start, "%d.%m.%Y")
+    date_end = datetime.strptime(req_model.end, "%d.%m.%Y")
+    result = await db.execute(
+        text(RATINGS_QUERY),
+        {
+            "date_start": date_start,
+            "date_end": date_end,
+        },
+    )
+
+    rows = result.mappings().all()
+    return rows
+
+@router.post(
+    "/download_ratings",
+    tags=["Информация"],
+    summary="Скачать Excel с рейтингом сотрудников",
+    description="Формирует и отдает Excel-файл с рейтингом сотрудников за период",
+    status_code=status.HTTP_200_OK,
+)
+@admin_only
+async def download_ratings_excel(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: object = None,
+):
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            data = {}
+        else:
+            data = await request.json()
+
+        req_model = InfoListsRequest(**(data or {}))
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Неверные входные данные: {e}",
+        )
+
+    return await UserInfoService.download_ratings_excel(req_model, user, db)
 
 @router.post("/download_equipment",
     tags=['Информация'],

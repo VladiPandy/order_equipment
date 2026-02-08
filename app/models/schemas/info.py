@@ -65,3 +65,16 @@ class InfoEquipmentTable(BaseTableRow):
     friday: str
     saturday: str
     sunday: str
+
+class RatingRowResponse(BaseModel):
+    executor: str
+    avg_total: float | None
+    avg_on_time: float | None
+    avg_full_set: float | None
+    avg_quality: float | None
+    total_answer_analyses: int | None
+    total_analyses: int
+
+
+class RatingsResponse(BaseModel):
+    items: List[RatingRowResponse]

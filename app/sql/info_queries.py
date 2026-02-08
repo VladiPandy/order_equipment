@@ -391,3 +391,57 @@ BOOKING_INFO_USER = """
     and x.is_delete = False
     order by x.date_booking desc ,y.project_name, z.analyze_name, e.name, concat(ex.last_name,' ',ex.first_name,' ',ex.patronymic)
 """
+
+RATINGS_QUERY = """
+SELECT
+    concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) AS executor,
+    ROUND(AVG(
+        CASE
+            WHEN ft.booking_id IS NOT NULL THEN
+                (
+                    CASE WHEN ft.question_1 IS TRUE THEN 1 ELSE 0 END +
+                    CASE WHEN ft.question_2 IS TRUE THEN 1 ELSE 0 END +
+                    CASE WHEN ft.question_3 IS TRUE THEN 1 ELSE 0 END
+                ) / 3.0
+            ELSE NULL
+        END
+    ),2) AS avg_total,
+    ROUND(AVG(
+        CASE
+            WHEN ft.booking_id IS NOT NULL
+                THEN CASE WHEN ft.question_1 IS TRUE THEN 1 ELSE 0 END
+            ELSE NULL
+        END
+    ),2) AS avg_on_time,
+    ROUND(AVG(
+        CASE
+            WHEN ft.booking_id IS NOT NULL
+                THEN CASE WHEN ft.question_2 IS TRUE THEN 1 ELSE 0 END
+            ELSE NULL
+        END
+    ),2) AS avg_full_set,
+    ROUND(AVG(
+        CASE
+            WHEN ft.booking_id IS NOT NULL
+                THEN CASE WHEN ft.question_3 IS TRUE THEN 1 ELSE 0 END
+            ELSE NULL
+        END
+    ),2) AS avg_quality,
+    SUM(
+        CASE
+            WHEN ft.booking_id IS NOT NULL THEN 1
+            ELSE 0
+        END
+    ) AS total_answer_analyses,
+    COUNT(
+        CASE
+            WHEN pb.status in ('Выполнено','Оценить') IS NOT NULL THEN 1
+            ELSE 0
+        END
+    ) AS total_analyses
+FROM executor e
+JOIN projects_booking pb ON pb.executor_id = e.id
+LEFT JOIN feedback_task ft ON ft.booking_id = pb.id
+WHERE pb.is_delete = false and date_booking BETWEEN :date_start AND :date_end
+GROUP BY executor
+"""

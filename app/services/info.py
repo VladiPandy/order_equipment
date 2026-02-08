@@ -14,7 +14,7 @@ import logging
 from models.schemas.info import InfoProjectResponse, InfoListsRequest, \
     InfoListsResponse, InfoBookingItem, InfoEquipmentTable, InfoExecutorTable
 from services.booking import UserBookingService
-from sql.info_queries import BOOKING_INFO_STAFF, BOOKING_INFO_USER
+from sql.info_queries import BOOKING_INFO_STAFF, BOOKING_INFO_USER, RATINGS_QUERY
 
 logger = logging.getLogger(__name__)
 
@@ -1073,3 +1073,56 @@ class UserInfoService:
         return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                  headers={"Content-Disposition": f"attachment; filename={date_booking_dict['date_start']}_{date_booking_dict['date_end']}_equipment.xlsx"})
 
+
+    @staticmethod
+    async def download_ratings_excel(
+        request_data: InfoListsRequest,
+        user,
+        db: AsyncSession,
+    ) -> Response:
+        request_dict = request_data.dict(exclude_unset=True)
+        date_booking_dict = await UserBookingService.validate_date_booking(request_dict)
+
+        date_start = date_booking_dict["date_start"]
+        date_end = date_booking_dict["date_end"]
+
+        result = await db.execute(
+            text(RATINGS_QUERY),
+            {
+                "date_start": date_start,
+                "date_end": date_end,
+            },
+        )
+        rows = result.fetchall()
+
+        df = pd.DataFrame(
+            rows,
+            columns=[
+                "Исполнитель",
+                "Средняя оценка",
+                "Без задержек",
+                "Полный набор измерений",
+                "Качество работы",
+                "Кол-во оцененных анализов",
+                "Всего завершенных анализов",
+            ],
+        )
+
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Рейтинг сотрудников")
+
+        output.seek(0)
+
+        filename = (
+            f"{date_booking_dict['date_start']}_"
+            f"{date_booking_dict['date_end']}_ratings.xlsx"
+        )
+
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            },
+        )
