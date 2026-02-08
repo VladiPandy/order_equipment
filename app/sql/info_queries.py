@@ -444,4 +444,5 @@ JOIN projects_booking pb ON pb.executor_id = e.id
 LEFT JOIN feedback_task ft ON ft.booking_id = pb.id
 WHERE pb.is_delete = false and date_booking BETWEEN :date_start AND :date_end
 GROUP BY executor
+order by concat(e.last_name,' ',e.first_name,' ',coalesce(e.patronymic,'')) desc
 """
