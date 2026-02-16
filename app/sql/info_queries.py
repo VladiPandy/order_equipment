@@ -433,9 +433,9 @@ SELECT
             ELSE 0
         END
     ) AS total_answer_analyses,
-    COUNT(
+    SUM(
         CASE
-            WHEN pb.status in ('Выполнено','Оценить') IS NOT NULL THEN 1
+            WHEN pb.status in ('Выполнено','Оценить') THEN 1
             ELSE 0
         END
     ) AS total_analyses
