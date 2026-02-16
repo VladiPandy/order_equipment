@@ -435,7 +435,7 @@ SELECT
     ) AS total_answer_analyses,
     SUM(
         CASE
-            WHEN pb.status in ('Выполнено','Оценить') THEN 1
+            WHEN coalesce(pb.status,'') in ('Выполнено','Оценить') THEN 1
             ELSE 0
         END
     ) AS total_analyses
