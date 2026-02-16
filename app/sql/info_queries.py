@@ -441,6 +441,10 @@ SELECT
     ) AS total_analyses
 FROM executor e
 JOIN projects_booking pb ON pb.executor_id = e.id
+JOIN "project" y ON y.id = pb.project_id
+JOIN "analyze" z ON z.id = pb.analyse_id
+JOIN equipment ec ON ec.id = pb.equipment_id
+JOIN executor ex ON ex.id = pb.executor_id
 LEFT JOIN feedback_task ft ON ft.booking_id = pb.id
 WHERE pb.is_delete = false and date_booking BETWEEN :date_start AND :date_end
 GROUP BY executor
