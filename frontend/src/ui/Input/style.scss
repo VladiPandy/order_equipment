@@ -70,8 +70,13 @@
     top: 42px;
     z-index: 100;
     padding: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-radius: var(--border-radius);
     background-color: var(--color-main);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+
     .react-calendar {
         width: 100%;
         background-color: transparent;
@@ -130,6 +135,15 @@
             background-color: var(--color-white);
         }
     }
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
 }
 
 .blocked {
