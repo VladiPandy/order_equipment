@@ -43,6 +43,16 @@ class Equipment(UUIDMixin,TimeStampedMixin):
                                         verbose_name='Суточный лимит прибора',
                                         validators=[MinValueValidator(0),
                                                     MaxValueValidator(100)])
+
+    daily_request_limit = models.IntegerField(
+        default=2,
+        verbose_name='Предел заявок в день',
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5)
+        ]
+    )
+
     class Meta:
         # Ваши таблицы находятся в нестандартной схеме. Это нужно указать в классе модели
         db_table = "public\".\"equipment"

@@ -353,6 +353,19 @@ class UserBookingService:
                                     {blocking_element_admin} and x.id != {booking_id}
                                     group by x.date_booking, x.executor_id, x.equipment_id
                                 )
+                                , equipment_request_limit as (
+                                    select
+                                        pb.date_booking,
+                                        pb.equipment_id,
+                                        count(*) as used_requests_per_day
+                                    from projects_booking pb
+                                    where pb.date_booking between '{date_booking_dict['date_start']}'::date 
+                                        and '{date_booking_dict['date_end']}'::date
+                                        and pb.is_delete = false
+                                        and pb.status != 'Отклонено'
+                                        {blocking_element_admin} and pb.id != {booking_id}
+                                    group by pb.date_booking, pb.equipment_id
+                                )
                                 ,days_employes as 
                                 (
                                 SELECT 1 d, x.executor_id  FROM public.control_enter_workerweekstatus x
@@ -534,6 +547,9 @@ class UserBookingService:
                             					and ul_per_day.date_booking = date::DATE
                             left join executor_limit exl on exl.executor_id = v.operator_id
                             left join equipment_limit eql on eql.equipment_id = v.equipment_id
+                            left join equipment_request_limit erl
+                                on erl.equipment_id = v.equipment_id
+                               and erl.date_booking = date::DATE
                             right join days_working dw on dw.d = EXTRACT(DOW from date::DATE)
                             right join days_employes de on de.d = EXTRACT(DOW from date::DATE) and de.executor_id = v.operator_id
                             left join limit_exec_per_day led on date::DATE = led.date_booking and ex.id = led.executor_id
@@ -552,6 +568,7 @@ class UserBookingService:
                         and {uuids_json['operator_val']}
                         and LEAST(coalesce(lpe.can_use, eq.count_samples),
                                 		z.count_samples - coalesce(ul_per_day.used_limit,0)) > 0
+                        and (eq.daily_request_limit - coalesce(erl.used_requests_per_day, 0)) > 0
                         and exec_analyz.operator_nt_id is not null
                         order by date::DATE, v.is_priority desc
                        """)
