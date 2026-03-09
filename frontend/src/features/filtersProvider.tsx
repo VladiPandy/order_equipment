@@ -116,6 +116,12 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
                 ...filters,
                 date: dateRange
             })
+
+            setTimeout(() => {
+                getFilters()
+            }, 0)
+
+            return
         } else {
             const attribute = atr as string[] | string
             const isReset = !attribute || attribute === 'Не выбран';
