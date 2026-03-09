@@ -30,12 +30,16 @@ const DatePicker: FC<CalendarPropsType> = ({ value, onChange, onlyWeek = false }
     }, [value.start, value.end])
 
     useEffect(() => {
+        const hasValue = Boolean(value?.start && value?.end)
+
+        if (hasValue) return
+
         if (onlyWeek) {
             onChange(getNextWeekDateRange(), Keys.DATE)
         } else {
             onChange(getDefaultDateRange(), Keys.DATE)
         }
-    }, [])
+    }, [onlyWeek, value?.start, value?.end, onChange])
 
     const handleClickOutside = (event: MouseEvent) => {
         if (ref.current && !ref.current.contains(event.target as Node)) {
