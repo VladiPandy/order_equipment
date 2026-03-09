@@ -98,15 +98,21 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
         return convertFiltersToBody(filters);
     };
 
-    const getFilters = () => {
+    const getFilters = (dateRange?: DateRange) => {
+        const date = dateRange ?? filters.date
+
         setLoading(true)
-        globalPost(endPoints.filters, (data: Filters) => {
-            prepareFiltersOptions(data)
-            setLoading(false)
-        }, {
-            start: filters.date?.start,
-            end: filters.date?.end
-        })
+        globalPost(
+            endPoints.filters,
+            (data: Filters) => {
+                prepareFiltersOptions(data)
+                setLoading(false)
+            },
+            {
+                start: date.start,
+                end: date.end
+            }
+        )
     }
 
     const changeFilters = (atr: FilterValue, type: KeyType) => {
@@ -118,7 +124,7 @@ export const FiltersProvider: FC<PropsType> = ({children}) => {
             })
 
             setTimeout(() => {
-                getFilters()
+                getFilters(dateRange)
             }, 0)
 
             return
